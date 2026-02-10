@@ -6,6 +6,27 @@ struct Theme {
     static let primaryText = Color.primary
     static let secondaryText = Color.secondary
     
+    // Platform-agnostic system colors
+    static var systemBackground: Color {
+        #if os(iOS)
+        Color(uiColor: .systemBackground)
+        #elseif os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color.white
+        #endif
+    }
+    
+    static var secondarySystemBackground: Color {
+        #if os(iOS)
+        Color(uiColor: .secondarySystemBackground)
+        #elseif os(macOS)
+        Color(nsColor: .controlBackgroundColor)
+        #else
+        Color.gray.opacity(0.1)
+        #endif
+    }
+    
     // Method colors for HTTP methods
     static func methodColor(for method: String) -> Color {
         switch method.uppercased() {
@@ -59,10 +80,18 @@ struct Theme {
 // Dark mode support
 extension View {
     func themedBackground() -> some View {
+        #if os(iOS)
         self.background(Color(uiColor: .systemBackground))
+        #elseif os(macOS)
+        self.background(Color(nsColor: .windowBackgroundColor))
+        #endif
     }
     
     func themedSecondaryBackground() -> some View {
+        #if os(iOS)
         self.background(Color(uiColor: .secondarySystemBackground))
+        #elseif os(macOS)
+        self.background(Color(nsColor: .controlBackgroundColor))
+        #endif
     }
 }

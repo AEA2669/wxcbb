@@ -1,0 +1,42 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+xcuserdata/
+*.xcodeproj
+DerivedData/
+
+# Xcode
+*.xcworkspace
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+xcshareddata/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Playgrounds
+*.playgroundbook/Edits/
+
+# Build results
+build/
+Packages/
+
+# Swift Package Manager Cache
+.swiftpm/xcode/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

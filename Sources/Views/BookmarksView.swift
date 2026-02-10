@@ -81,7 +81,7 @@ struct BookmarksView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: 600)
-        .background(Color(uiColor: .systemBackground))
+        .background(Theme.systemBackground)
         .cornerRadius(20)
         .shadow(radius: 10)
         .padding()

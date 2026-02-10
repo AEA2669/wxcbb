@@ -74,7 +74,7 @@ struct BrowserView: View {
                     }
                 }
                 .padding(8)
-                .background(Color(uiColor: .secondarySystemBackground))
+                .background(Theme.secondarySystemBackground)
                 .cornerRadius(10)
                 
                 // Reload/Stop button

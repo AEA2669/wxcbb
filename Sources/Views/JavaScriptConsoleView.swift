@@ -48,7 +48,7 @@ struct JavaScriptConsoleView: View {
                 }
             }
             .padding()
-            .background(Color(uiColor: .secondarySystemBackground))
+            .background(Theme.secondarySystemBackground)
         }
     }
     

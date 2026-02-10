@@ -57,7 +57,7 @@ struct TabBarView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: 500)
-        .background(Color(uiColor: .systemBackground))
+        .background(Theme.systemBackground)
         .cornerRadius(20)
         .shadow(radius: 10)
         .padding()
@@ -103,7 +103,7 @@ struct TabCard: View {
                 )
         }
         .padding()
-        .background(Color(uiColor: .secondarySystemBackground))
+        .background(Theme.secondarySystemBackground)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

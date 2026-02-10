@@ -105,7 +105,7 @@ struct ImageThumbnail: View {
             }
         }
         .frame(height: 100)
-        .background(Color(uiColor: .secondarySystemBackground))
+        .background(Theme.secondarySystemBackground)
         .cornerRadius(8)
         .clipped()
         .task {

@@ -232,7 +232,7 @@ struct FilterChip: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(isSelected ? Color.accentColor : Color(uiColor: .secondarySystemBackground))
+                .background(isSelected ? Color.accentColor : Theme.secondarySystemBackground)
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(16)
         }

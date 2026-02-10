@@ -44,7 +44,7 @@ struct ContentView: View {
                     
                     devToolsPanel(for: tool)
                         .frame(height: devToolsHeight)
-                        .background(Color(uiColor: .systemBackground))
+                        .background(Theme.systemBackground)
                 }
                 
                 // Bottom toolbar
@@ -109,7 +109,7 @@ struct ContentView: View {
                 }
             }
             .padding()
-            .background(Color(uiColor: .secondarySystemBackground))
+            .background(Theme.secondarySystemBackground)
             
             Divider()
             
