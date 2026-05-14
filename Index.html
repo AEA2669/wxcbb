@@ -416,16 +416,6 @@
         </div>
     </div>
 
-    <h2 class="section-title">College of DuPage NEXLAB Forecast Models</h2>
-    <div class="radar-panel" style="padding: 10px; overflow: hidden; background: var(--card-bg); border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px;">
-            <span style="font-size: 0.9rem; color: var(--text-main);">HRRR Model Simulation (Simulated Reflectivity)</span>
-            <a href="https://weather.cod.edu/forecast/" target="_blank" style="padding: 6px 14px; font-size: 0.85rem; background: var(--accent-orange); color: #fff; text-decoration: none; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-weight: bold;">Open Native COD Radar ↗</a>
-        </div>
-        <!-- weather.cod.edu uses strict CSP frame-ancestors. A CSP-bypassing browser extension is required to view this iframe on external domains. -->
-        <iframe src="https://weather.cod.edu/forecast/" width="100%" height="850" frameborder="0" allowfullscreen style="border: 1px solid var(--border-color); border-radius: 4px; display: block; background: #fff;"></iframe>
-    </div>
-
     <h2 class="section-title">Operations Weather Story</h2>
     <div class="story-panel" id="story-panel">
         <div id="story-status" style="color: var(--accent-orange); font-size: 0.9rem; margin-bottom: 10px;">Establishing secure tunnel to NWS...</div>
@@ -748,9 +738,14 @@
         const spcStatus = document.getElementById('spc-status');
         const progImg = document.getElementById('prog-img');
         const progStatus = document.getElementById('prog-status');
+        const wpcImg = document.getElementById('wpc-img');
+        const wpcStatus = document.getElementById('wpc-status');
         
-        const spcUrl = `https://www.spc.noaa.gov/products/outlook/day1otlk.gif`;
-        const progUrl = `https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif`;
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        
+        const spcUrl = isNetlify ? '/api/spc/products/outlook/day1otlk.gif' : 'https://www.spc.noaa.gov/products/outlook/day1otlk.gif';
+        const progUrl = isNetlify ? '/api/wpc/noaa/noaad1.gif' : 'https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif';
+        const wpcUrl = isNetlify ? '/api/wpc/basicwx/9fndfd.gif' : 'https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif';
         
         function loadDirectly(imgEl, statusEl, baseurl, successMsg) {
             const finalUrl = `${baseurl}?v=${new Date().getTime()}`;
@@ -769,6 +764,7 @@
 
         if(spcImg) loadDirectly(spcImg, spcStatus, spcUrl, 'Live SPC Outlook Active');
         if(progImg) loadDirectly(progImg, progStatus, progUrl, 'Live Surface Prog Active');
+        if(wpcImg) loadDirectly(wpcImg, wpcStatus, wpcUrl, 'Live WPC Chart Active');
     }
 
     function loadSatellite() {
@@ -1098,9 +1094,12 @@
         const c1 = document.getElementById('cam1');
         const c2 = document.getElementById('cam2');
         
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        
         // Replaced defunct WFAA/WeatherBug feeds with highly reliable TxDOT camera feeds
-        const url1 = `https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg`;
-        const url2 = `https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg`;
+        // Proxied through Netlify to bypass strict hotlink tracking protection
+        const url1 = isNetlify ? '/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg' : 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg';
+        const url2 = isNetlify ? '/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg' : 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg';
 
         if(c1) c1.src = `${url1}?v=${new Date().getTime()}`;
         if(c2) c2.src = `${url2}?v=${new Date().getTime()}`;
