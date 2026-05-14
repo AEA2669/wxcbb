@@ -10,6 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-velocity@2.0.0/dist/leaflet-velocity.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@2.0.0/dist/leaflet-velocity.min.js"></script>
 
     <style>
         :root {
@@ -498,6 +501,13 @@
                 <div id="taf-feed" style="padding: 12px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--text-main); max-height: 400px; overflow-y: auto;">
                     <span style="color: var(--accent-orange);">Acquiring TAF data...</span>
                 </div>
+                <!-- TAF Timeline Visualization -->
+                <div style="margin-top: 5px; padding: 15px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px;">🕒 TAF Operational Timeline</div>
+                    <div style="height: 150px; position: relative;">
+                        <canvas id="taf-timeline-chart"></canvas>
+                    </div>
+                </div>
             </div>
             <!-- SIGMETs Panel -->
             <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
@@ -507,6 +517,16 @@
                 </div>
                 <div id="sigmet-feed" style="padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto;">
                     <span style="color: var(--accent-orange);">Checking for active SIGMETs...</span>
+                </div>
+            </div>
+            <!-- PIREPs Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(17, 98, 47, 0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">☁️ Pilot Reports (PIREP) — 250nm Radius</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #16a34a; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="pirep-feed" style="padding: 12px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Acquiring Pilot Reports...</span>
                 </div>
             </div>
             <!-- G-AIRMETs Panel -->
@@ -579,6 +599,29 @@
                     <span style="color: var(--accent-orange);">Acquiring forecast discussion...</span>
                 </div>
             </div>
+
+            <!-- Critical NOTAMs Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(154, 52, 18, 0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">🚫 Critical NOTAMs (Runway/Taxiway)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #ea580c; color: #fff; border-radius: 10px; font-weight: 600;">FAA</span>
+                </div>
+                <div id="notam-critical-feed" style="padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--text-muted);">Parsing NOTAMs for closures...</span>
+                </div>
+            </div>
+
+            <!-- Skew-T Sounding Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(12, 74, 110, 0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">📈 Vertical Profile (Skew-T/Log-P)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #0369a1; color: #fff; border-radius: 10px; font-weight: 600;">NOAA / AWC</span>
+                </div>
+                <div style="padding: 10px; text-align: center;">
+                    <img id="skewt-img" src="" alt="Sounding" style="max-width: 100%; border-radius: 4px; display: none; background: #fff;">
+                    <div id="skewt-status" style="font-size: 0.8rem; color: var(--accent-orange);">Loading atmospheric sounding...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -590,14 +633,67 @@
 
     <h2 class="section-title">Extended Operational Forecast</h2>
     <div class="forecast-list" id="forecast-list"></div>
+
+    <h2 class="section-title">🛠️ Strategic Aviation Resources & External Tools</h2>
+    <div style="margin-bottom: 50px; background: var(--panel-bg); padding: 25px; border: 1px solid var(--border-color); border-radius: 12px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h3 style="margin-top: 0; color: var(--accent-blue); font-size: 1.1rem;">🔗 Essential FAA Links</h3>
+                <ul style="padding-left: 20px; line-height: 1.8; color: var(--text-main); font-size: 0.9rem;">
+                    <li><a href="https://notams.aim.faa.gov/notamSearch/" target="_blank" style="color: var(--accent-orange); text-decoration: none;">Federal NOTAM System (Search)</a></li>
+                    <li><a href="https://nasstatus.faa.gov/" target="_blank" style="color: var(--accent-orange); text-decoration: none;">FAA National Airspace System Status</a></li>
+                    <li><a href="https://www.fly.faa.gov/flyfaa/usmap.jsp" target="_blank" style="color: var(--accent-orange); text-decoration: none;">FAA Real-time Airport Status Map</a></li>
+                    <li><a href="https://weathercams.faa.gov/" target="_blank" style="color: var(--accent-orange); text-decoration: none;">FAA Weather Cams (National)</a></li>
+                </ul>
+            </div>
+            <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h3 style="margin-top: 0; color: var(--accent-blue); font-size: 1.1rem;">✈️ Flight Planning & Tracking</h3>
+                <ul style="padding-left: 20px; line-height: 1.8; color: var(--text-main); font-size: 0.9rem;">
+                    <li><a href="https://www.flightradar24.com/32.9,-97.0/10" target="_blank" style="color: var(--accent-orange); text-decoration: none;">Live FlightRadar24 (DFW Area)</a></li>
+                    <li><a href="https://globe.adsbexchange.com/?lat=32.897&lon=-97.037&zoom=10.0" target="_blank" style="color: var(--accent-orange); text-decoration: none;">ADS-B Exchange (Unfiltered Tracking)</a></li>
+                    <li><a href="https://www.airnav.com/airport/KDFW" target="_blank" style="color: var(--accent-orange); text-decoration: none;">AirNav: KDFW Airport Information</a></li>
+                    <li><a href="https://www.skyvector.com/?ll=32.896,-97.037&chart=301&zoom=3" target="_blank" style="color: var(--accent-orange); text-decoration: none;">SkyVector: Aeronautical Charts</a></li>
+                </ul>
+            </div>
+            <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h3 style="margin-top: 0; color: var(--accent-blue); font-size: 1.1rem;">🌦️ Advanced Weather Tools</h3>
+                <ul style="padding-left: 20px; line-height: 1.8; color: var(--text-main); font-size: 0.9rem;">
+                    <li><a href="https://www.windy.com/KDFW?32.896,-97.037,8" target="_blank" style="color: var(--accent-orange); text-decoration: none;">Windy.com Interactive Map</a></li>
+                    <li><a href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" style="color: var(--accent-orange); text-decoration: none;">SPC Convective Outlook (Detailed)</a></li>
+                    <li><a href="https://www.nhc.noaa.gov/" target="_blank" style="color: var(--accent-orange); text-decoration: none;">National Hurricane Center (NHC)</a></li>
+                    <li><a href="https://www.swpc.noaa.gov/" target="_blank" style="color: var(--accent-orange); text-decoration: none;">Space Weather Prediction Center</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 50px; padding: 30px 20px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.82rem; text-align: center; background: rgba(0,0,0,0.2);">
+        <h3 style="color: var(--accent-blue); font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">📊 Operational Data Sources & API Credits</h3>
+        <p style="max-width: 800px; margin: 0 auto 20px;">This dashboard integrates real-time meteorological and aviation data from multiple federal and community providers to ensure high-fidelity situational awareness.</p>
+        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; max-width: 900px; margin: 0 auto;">
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">National Weather Service (NWS)</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">Aviation Weather Center (AWC)</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">NOAA / NESDIS / STAR</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">RainViewer (Radar/Nowcast)</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">FAA National Airspace System</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">NASA Space Weather Prediction Center</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">Iowa Environmental Mesonet (IEM)</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">CARTO / OpenStreetMap / Esri (Geospatial)</span>
+            <span style="padding: 4px 12px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">CheckWX API</span>
+        </div>
+        <p style="margin-top: 25px; font-style: italic; color: var(--accent-orange);">Operational Data &copy; 2026 - Provided for research and situational awareness only. NOT for primary flight navigation or life-safety decisions.</p>
+    </div>
 </div>
 
 <script>
+    const isNetlify = window.location.hostname.includes('netlify.app');
+    const p = (proxy, direct) => isNetlify ? proxy : direct;
+
     const statusEl = document.getElementById('status');
     const listEl = document.getElementById('forecast-list');
 
     let globalGridData = null; // Store for export
-    let tempChart, windChart, moistureChart, eventsChart, pressureChart, visChart, windDirChart, precipChart; // Declare before use
+    let tempChart, windChart, moistureChart, eventsChart, pressureChart, visChart, windDirChart, precipChart, tafTimelineChart; // Declare before use
 
     let radarMap;
     const hubMarkers = {};
@@ -661,7 +757,7 @@
         
         try {
             document.getElementById('status').textContent = "Locating Station...";
-            const res = await fetch(`https://api.weather.gov/stations/${newId}`);
+            const res = await fetch(p(`/api/nws-api/stations/${newId}`, `https://api.weather.gov/stations/${newId}`));
             if (!res.ok) throw new Error("Station not found");
             const data = await res.json();
             
@@ -985,30 +1081,56 @@
         const wpcImg = document.getElementById('wpc-img');
         const wpcStatus = document.getElementById('wpc-status');
         
-        const isNetlify = window.location.hostname.includes('netlify.app');
+        const spcUrl = p('/api/spc/products/outlook/day1otlk.gif', 'https://www.spc.noaa.gov/products/outlook/day1otlk.gif');
+        const progUrl = p('/api/wpc/noaa/noaad1.gif', 'https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif');
+        const wpcUrl = p('/api/wpc/basicwx/9fndfd.gif', 'https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif');
         
-        const spcUrl = isNetlify ? '/api/spc/products/outlook/day1otlk.gif' : 'https://www.spc.noaa.gov/products/outlook/day1otlk.gif';
-        const progUrl = isNetlify ? '/api/wpc/noaa/noaad1.gif' : 'https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif';
-        const wpcUrl = isNetlify ? '/api/wpc/basicwx/9fndfd.gif' : 'https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif';
-        
-        function loadDirectly(imgEl, statusEl, baseurl, successMsg) {
-            const finalUrl = `${baseurl}?v=${new Date().getTime()}`;
+        function loadWithFallback(imgEl, statusEl, baseurl, successMsg) {
+            let proxyLevel = 0;
+            // Map the /api/ local proxy to the real domain for the external proxies
+            const proxyMap = {
+                '/api/spc/': 'https://www.spc.noaa.gov/',
+                '/api/wpc/': 'https://www.wpc.ncep.noaa.gov/'
+            };
             
-            imgEl.onload = function() {
-                imgEl.style.display = 'block';
-                statusEl.textContent = successMsg;
-                statusEl.style.color = '#4ade80';
-            };
-            imgEl.onerror = function() {
-                statusEl.textContent = "Chart unavailable or blocked.";
-                statusEl.style.color = "#f87171";
-            };
-            imgEl.src = finalUrl;
+            let targetUrl = baseurl;
+            for (const [key, value] of Object.entries(proxyMap)) {
+                if (baseurl.startsWith(key)) {
+                    targetUrl = baseurl.replace(key, value);
+                    break;
+                }
+            }
+
+            function tryLoad() {
+                let finalUrl = `${baseurl}?v=${new Date().getTime()}`;
+                
+                if (proxyLevel === 1) finalUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                else if (proxyLevel === 2) finalUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetUrl)}`;
+
+                const imgTester = new Image();
+                imgTester.onload = function() {
+                    imgEl.src = this.src;
+                    imgEl.style.display = 'block';
+                    statusEl.textContent = successMsg;
+                    statusEl.style.color = '#4ade80';
+                };
+                imgTester.onerror = function() {
+                    proxyLevel++;
+                    if (proxyLevel <= 2) {
+                        tryLoad();
+                    } else {
+                        statusEl.textContent = "Chart unavailable or blocked.";
+                        statusEl.style.color = "#f87171";
+                    }
+                };
+                imgTester.src = finalUrl;
+            }
+            tryLoad();
         }
 
-        if(spcImg) loadDirectly(spcImg, spcStatus, spcUrl, 'Live SPC Outlook Active');
-        if(progImg) loadDirectly(progImg, progStatus, progUrl, 'Live Surface Prog Active');
-        if(wpcImg) loadDirectly(wpcImg, wpcStatus, wpcUrl, 'Live WPC Chart Active');
+        if(spcImg) loadWithFallback(spcImg, spcStatus, spcUrl, 'Live SPC Outlook Active');
+        if(progImg) loadWithFallback(progImg, progStatus, progUrl, 'Live Surface Prog Active');
+        if(wpcImg) loadWithFallback(wpcImg, wpcStatus, wpcUrl, 'Live WPC Chart Active');
     }
 
     function loadSatellite() {
@@ -1016,8 +1138,8 @@
         const satTime = document.getElementById('sat-status');
         
         const urlsToTry = [
-            `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/CONUS/GEOCOLOR/1250x750.jpg`,
-            `https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/1250x750.jpg`
+            p('/api/nesdis/GOES19/ABI/CONUS/GEOCOLOR/1250x750.jpg', `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/CONUS/GEOCOLOR/1250x750.jpg`),
+            p('/api/nesdis/GOES16/ABI/CONUS/GEOCOLOR/1250x750.jpg', `https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/1250x750.jpg`)
         ];
         
         let urlIndex = 0;
@@ -1082,26 +1204,164 @@
 
         darkMap.addTo(radarMap);
 
-        // Add Smooth Composite Radar (RainViewer)
-        const nexrad = L.layerGroup().addTo(radarMap);
-        
+        // New dynamic layers
+        const lightningLayer = L.layerGroup();
+        const lightningHeatLayer = L.heatLayer([], { radius: 25, blur: 15, maxZoom: 10 });
+        const stormCellLayer = L.layerGroup();
+        const windStreamLayer = L.layerGroup();
+        const cwaLayer = L.layerGroup();
+        const regionalMetarLayer = L.layerGroup();
+        const rvSatellite = L.layerGroup();
+        const rvNowcast = L.layerGroup();
+
         function updateRadarLayer() {
-            fetch('https://api.rainviewer.com/public/weather-maps.json')
+            fetch(p('/api/rainviewer/public/weather-maps.json', 'https://api.rainviewer.com/public/weather-maps.json'))
                 .then(res => res.json())
                 .then(data => {
                     const host = data.host;
-                    const path = data.radar.past[data.radar.past.length - 1].path;
-                    const rvTileUrl = `${host}${path}/256/{z}/{x}/{y}/2/1_1.png`;
+                    const lastRadar = data.radar.past[data.radar.past.length - 1].path;
+                    const lastSat = data.satellite.infrared[data.satellite.infrared.length - 1].path;
+                    const nowcastRadar = data.radar.nowcast[0].path;
                     
                     nexrad.clearLayers();
-                    L.tileLayer(rvTileUrl, {
+                    L.tileLayer(`${host}${lastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
                         opacity: 0.75,
                         transparent: true,
                         attribution: 'Smooth Radar Composite &copy; <a href="https://www.rainviewer.com/">RainViewer</a>'
                     }).addTo(nexrad);
+
+                    rvSatellite.clearLayers();
+                    L.tileLayer(`${host}${lastSat}/256/{z}/{x}/{y}/0/1_1.png`, {
+                        opacity: 0.45,
+                        transparent: true,
+                        attribution: 'Infrared Satellite &copy; RainViewer'
+                    }).addTo(rvSatellite);
+
+                    rvNowcast.clearLayers();
+                    L.tileLayer(`${host}${nowcastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
+                        opacity: 0.6,
+                        transparent: true,
+                        attribution: 'Future Radar (Nowcast) &copy; RainViewer'
+                    }).addTo(rvNowcast);
                 }).catch(e => console.log("RainViewer fetch failed", e));
         }
         updateRadarLayer();
+
+        function fetchLightning() {
+            fetch(p('/api/awc/api/data/lightning?format=geojson', 'https://aviationweather.gov/api/data/lightning?format=geojson'))
+                .then(res => res.json())
+                .then(data => {
+                    lightningLayer.clearLayers();
+                    const heatPoints = [];
+                    L.geoJSON(data, {
+                        pointToLayer: (feature, latlng) => {
+                            heatPoints.push([latlng.lat, latlng.lng, 0.5]);
+                            return L.circleMarker(latlng, {
+                                radius: 3, color: '#facc15', fillColor: '#fef08a', fillOpacity: 0.9, weight: 1
+                            });
+                        },
+                        onEachFeature: (feature, layer) => {
+                            layer.bindPopup(`<b>Lightning Strike</b><br>Observed: ${feature.properties.obstime || 'Recent'}`);
+                        }
+                    }).addTo(lightningLayer);
+                    lightningHeatLayer.setLatLngs(heatPoints);
+                }).catch(() => {});
+        }
+
+        function fetchStormCells() {
+            // Using IEM Nexrad Attributes feed
+            fetch(p('/api/iem/geojson/nexrad_attr.json', 'https://api.codetabs.com/v1/proxy/?quest=https://mesonet.agron.iastate.edu/geojson/nexrad_attr.json'))
+                .then(res => res.json())
+                .then(data => {
+                    stormCellLayer.clearLayers();
+                    L.geoJSON(data, {
+                        pointToLayer: (feature, latlng) => {
+                            const props = feature.properties;
+                            const color = props.hail_prob > 50 ? '#ef4444' : '#f97316';
+                            return L.circleMarker(latlng, {
+                                radius: 6, color: color, fillColor: color, fillOpacity: 0.7, weight: 2
+                            });
+                        },
+                        onEachFeature: (feature, layer) => {
+                            const p = feature.properties;
+                            let html = `<b>Storm Cell: ${p.storm_id}</b><br>`;
+                            html += `Max DBZ: ${p.max_dbz}<br>`;
+                            html += `Hail Prob: ${p.hail_prob}%<br>`;
+                            html += `Severe Hail: ${p.poh}%<br>`;
+                            html += `Movement: ${p.drct}° @ ${p.sknt} KT<br>`;
+                            if (p.meso) html += `<b style="color:#ef4444;">MESOCYCLONE DETECTED</b><br>`;
+                            if (p.tvs) html += `<b style="color:#ef4444;">TVS DETECTED</b><br>`;
+                            
+                            layer.bindPopup(html);
+                            
+                            // Draw projected path
+                            if (p.drct !== null && p.sknt > 0) {
+                                const angle = (p.drct + 180) % 360; // Direction it's moving towards
+                                const rad = (angle * Math.PI) / 180;
+                                const dist = p.sknt * 0.5; // 30 min projection
+                                const lat2 = layer.getLatLng().lat + (dist / 60) * Math.cos(rad);
+                                const lon2 = layer.getLatLng().lng + (dist / (60 * Math.cos(layer.getLatLng().lat * Math.PI / 180))) * Math.sin(rad);
+                                L.polyline([layer.getLatLng(), [lat2, lon2]], { color: '#ef4444', weight: 2, dashArray: '5, 5' }).addTo(stormCellLayer);
+                            }
+                        }
+                    }).addTo(stormCellLayer);
+                }).catch(() => {});
+        }
+
+        function fetchWindStreamlines() {
+            // Static GFS sample as real-time GRIB-to-JSON requires backend
+            fetch('https://raw.githubusercontent.com/danwild/wind-js-server/master/data/gfs.json')
+                .then(res => res.json())
+                .then(data => {
+                    windStreamLayer.clearLayers();
+                    L.velocityLayer({
+                        displayValues: true,
+                        displayOptions: {
+                            velocityType: 'Global Wind',
+                            position: 'bottomleft',
+                            displayEmptyString: 'No wind data'
+                        },
+                        data: data,
+                        maxVelocity: 15
+                    }).addTo(windStreamLayer);
+                }).catch(e => console.log("Wind streamlines fetch failed", e));
+        }
+
+        function fetchCWA() {
+            fetch(p('/api/awc/api/data/cwa?format=geojson', 'https://aviationweather.gov/api/data/cwa?format=geojson'))
+                .then(res => res.json())
+                .then(data => {
+                    cwaLayer.clearLayers();
+                    L.geoJSON(data, {
+                        style: { color: '#a855f7', weight: 3, fillOpacity: 0.3 },
+                        onEachFeature: (feature, layer) => {
+                            layer.bindPopup(`<b>Center Weather Advisory (CWA)</b><br><span style="font-size:0.82rem; font-family:monospace;">${feature.properties.rawMsg || 'Active advisory'}</span>`);
+                        }
+                    }).addTo(cwaLayer);
+                }).catch(() => {});
+        }
+
+        function fetchRegionalMetars() {
+            const b = radarMap.getBounds();
+            const bbox = `${b.getWest().toFixed(2)},${b.getSouth().toFixed(2)},${b.getEast().toFixed(2)},${b.getNorth().toFixed(2)}`;
+            fetch(p(`/api/awc/api/data/metar?format=geojson&bbox=${bbox}`, `https://aviationweather.gov/api/data/metar?format=geojson&bbox=${bbox}`))
+                .then(res => res.json())
+                .then(data => {
+                    regionalMetarLayer.clearLayers();
+                    L.geoJSON(data, {
+                        pointToLayer: (feature, latlng) => {
+                            const cat = feature.properties.flight_cat || 'VFR';
+                            let color = '#22c55e'; // VFR
+                            if (cat === 'MVFR') color = '#3b82f6';
+                            if (cat === 'IFR') color = '#ef4444';
+                            if (cat === 'LIFR') color = '#d946ef';
+                            return L.circleMarker(latlng, {
+                                radius: 5, color: '#000', fillColor: color, fillOpacity: 0.9, weight: 1
+                            }).bindPopup(`<b>${feature.properties.id}</b> (${cat})<br><span style="font-size:0.8rem; font-family:monospace;">${feature.properties.rawOb}</span>`);
+                        }
+                    }).addTo(regionalMetarLayer);
+                }).catch(() => {});
+        }
 
         const hubLayerGroup = L.layerGroup().addTo(radarMap);
 
@@ -1131,47 +1391,53 @@
         };
         const hazardLayer = L.layerGroup().addTo(radarMap);
         
-        // Fetch SIGMETs (Proxied to avoid local null origin CORS blocks)
-        fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent('https://aviationweather.gov/api/data/sigmet?format=geojson')}`)
-            .then(res => res.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: { color: '#ef4444', weight: 2, fillOpacity: 0.2 },
-                    onEachFeature: (feature, layer) => {
-                        layer.bindPopup(`<b>SIGMET</b><br><span style="font-size:0.85rem;">${feature.properties.rawSigmet || 'Hazard'}</span>`);
-                    }
-                }).addTo(hazardLayer);
-            }).catch(() => console.log('No SIGMETs'));
+        // Fetch SIGMETs (Proxied)
+        function fetchSigmets() {
+            fetch(p('/api/awc/api/data/sigmet?format=geojson', 'https://aviationweather.gov/api/data/sigmet?format=geojson'))
+                .then(res => res.json())
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: { color: '#ef4444', weight: 2, fillOpacity: 0.2 },
+                        onEachFeature: (feature, layer) => {
+                            layer.bindPopup(`<b>SIGMET</b><br><span style="font-size:0.85rem;">${feature.properties.rawSigmet || 'Hazard'}</span>`);
+                        }
+                    }).addTo(hazardLayer);
+                }).catch(() => console.log('No SIGMETs'));
+        }
+        fetchSigmets();
 
-        // Fetch AIRMETs (Proxied to avoid local null origin CORS blocks)
-        fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent('https://aviationweather.gov/api/data/airmet?format=geojson')}`)
-            .then(res => res.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: { color: '#f59e0b', weight: 2, fillOpacity: 0.1 },
-                    onEachFeature: (feature, layer) => {
-                        layer.bindPopup(`<b>AIRMET</b><br><span style="font-size:0.85rem;">${feature.properties.rawAirmet || 'Hazard'}</span>`);
-                    }
-                }).addTo(hazardLayer);
-            }).catch(() => console.log('No AIRMETs'));
+        // Fetch AIRMETs (Proxied)
+        function fetchAirmets() {
+            fetch(p('/api/awc/api/data/airmet?format=geojson', 'https://aviationweather.gov/api/data/airmet?format=geojson'))
+                .then(res => res.json())
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: { color: '#f59e0b', weight: 2, fillOpacity: 0.1 },
+                        onEachFeature: (feature, layer) => {
+                            layer.bindPopup(`<b>AIRMET</b><br><span style="font-size:0.85rem;">${feature.properties.rawAirmet || 'Hazard'}</span>`);
+                        }
+                    }).addTo(hazardLayer);
+                }).catch(() => console.log('No AIRMETs'));
+        }
+        fetchAirmets();
 
-        const warningsLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/us/wwa.cgi', {
+        const warningsLayer = L.tileLayer.wms(p('/api/iem/cgi-bin/wms/us/wwa.cgi', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/us/wwa.cgi'), {
             layers: 'warnings_c', format: 'image/png', transparent: true, opacity: 0.6, attribution: '&copy; NWS/IEM'
         });
 
-        const velocityLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0u.cgi', {
+        const velocityLayer = L.tileLayer.wms(p('/api/iem/cgi-bin/wms/nexrad/n0u.cgi', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0u.cgi'), {
             layers: 'nexrad-n0u-900913', format: 'image/png', transparent: true, opacity: 0.65, attribution: 'Velocity &copy; IEM'
         });
 
-        const precipLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0p.cgi', {
+        const precipLayer = L.tileLayer.wms(p('/api/iem/cgi-bin/wms/nexrad/n0p.cgi', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0p.cgi'), {
             layers: 'nexrad-n0p-900913', format: 'image/png', transparent: true, opacity: 0.65, attribution: 'Total Precip &copy; IEM'
         });
 
-        const goesIrLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', {
+        const goesIrLayer = L.tileLayer.wms(p('/api/iem/cgi-bin/wms/goes/conus_ir.cgi', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi'), {
             layers: 'goes_conus_ir', format: 'image/png', transparent: true, opacity: 0.5, attribution: 'GOES IR &copy; IEM'
         });
 
-        const goesVisLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_vis.cgi', {
+        const goesVisLayer = L.tileLayer.wms(p('/api/iem/cgi-bin/wms/goes/conus_vis.cgi', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_vis.cgi'), {
             layers: 'goes_conus_vis', format: 'image/png', transparent: true, opacity: 0.5, attribution: 'GOES Visible &copy; IEM'
         });
 
@@ -1184,7 +1450,7 @@
             const b = radarMap.getBounds();
             
             if (radarMap.hasLayer(webcamLayerGroup)) {
-                fetch(`https://weathercams.faa.gov/api/cameras?minLat=${b.getSouth()}&minLog=${b.getWest()}&maxLat=${b.getNorth()}&maxLog=${b.getEast()}`)
+                fetch(p(`/api/faa-cams/api/cameras?minLat=${b.getSouth()}&minLog=${b.getWest()}&maxLat=${b.getNorth()}&maxLog=${b.getEast()}`, `https://weathercams.faa.gov/api/cameras?minLat=${b.getSouth()}&minLog=${b.getWest()}&maxLat=${b.getNorth()}&maxLog=${b.getEast()}`))
                     .then(r => r.json())
                     .then(data => {
                         webcamLayerGroup.clearLayers();
@@ -1199,8 +1465,6 @@
             }
         }
 
-        radarMap.on('moveend', () => { if (radarMap.hasLayer(webcamLayerGroup)) fetchWebcams(); });
-        radarMap.on('overlayadd', (e) => { if (e.name === 'Live FAA Webcams') fetchWebcams(); });
 
         const esriLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Esri Borders'
@@ -1216,10 +1480,25 @@
             "Radar Composite (RainViewer)": nexrad,
             "Base Velocity (N0U)": velocityLayer,
             "Storm Total Precip (N0P)": precipLayer,
+            "Storm Cell Tracking": stormCellLayer,
+            "Live Lightning Strikes": lightningLayer,
+            "Lightning Density Heatmap": lightningHeatLayer,
+            "Wind Streamlines (Animated)": windStreamLayer,
+            "High-Res HRRR (Reflectivity)": L.tileLayer.wms(p('/api/iem/cgi-bin/wms/hrrr/refc.cgi?', 'https://mesonet.agron.iastate.edu/cgi-bin/wms/hrrr/refc.cgi?'), {
+                layers: 'refc',
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.65,
+                attribution: 'High-Res HRRR &copy; IEM'
+            }),
+            "Future Radar (Nowcast)": rvNowcast,
+            "RainViewer Satellite (IR)": rvSatellite,
             "GOES Infrared (IR)": goesIrLayer,
             "GOES Visible (VIS)": goesVisLayer,
             "NWS Watches/Warnings": warningsLayer,
             "Aviation Hazards (SIG/AIR)": hazardLayer,
+            "Center Weather Advisories": cwaLayer,
+            "Regional METARs (VFR/IFR)": regionalMetarLayer,
             "Live FAA Webcams": webcamLayerGroup,
             "Hub METAR Pins": hubLayerGroup,
             "FAA VFR Sectionals": vfrSectional,
@@ -1227,6 +1506,19 @@
             "Roads & Highways": esriRoads
         };
         L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(radarMap);
+
+        radarMap.on('overlayadd', (e) => { 
+            if (e.name === 'Live FAA Webcams') fetchWebcams(); 
+            if (e.name === 'Live Lightning Strikes' || e.name === 'Lightning Density Heatmap') fetchLightning();
+            if (e.name === 'Storm Cell Tracking') fetchStormCells();
+            if (e.name === 'Wind Streamlines (Animated)') fetchWindStreamlines();
+            if (e.name === 'Center Weather Advisories') fetchCWA();
+            if (e.name === 'Regional METARs (VFR/IFR)') fetchRegionalMetars();
+        });
+        radarMap.on('moveend', () => { 
+            if (radarMap.hasLayer(webcamLayerGroup)) fetchWebcams(); 
+            if (radarMap.hasLayer(regionalMetarLayer)) fetchRegionalMetars();
+        });
 
         // Add Scale Control
         L.control.scale({ imperial: true, metric: false }).addTo(radarMap);
@@ -1338,12 +1630,10 @@
         const c1 = document.getElementById('cam1');
         const c2 = document.getElementById('cam2');
         
-        const isNetlify = window.location.hostname.includes('netlify.app');
-        
         // Replaced defunct WFAA/WeatherBug feeds with highly reliable TxDOT camera feeds
         // Proxied through Netlify to bypass strict hotlink tracking protection
-        const url1 = isNetlify ? '/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg' : 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg';
-        const url2 = isNetlify ? '/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg' : 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg';
+        const url1 = p('/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg', 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/US75_at_Mockingbird.jpg');
+        const url2 = p('/api/txdot/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg', 'https://its.txdot.gov/ITS_WEB/FrontEnd/image/DalTrans/Spur366_at_Field.jpg');
 
         if(c1) c1.src = `${url1}?v=${new Date().getTime()}`;
         if(c2) c2.src = `${url2}?v=${new Date().getTime()}`;
@@ -1357,12 +1647,9 @@
         try {
             // Endpoints replicating nasstatus.faa.gov
             // If hosted on Netlify, use our local proxy to bypass CORS. Otherwise use direct URLs (requires CORS extension).
-            const isNetlify = window.location.hostname.includes('netlify.app');
             const endpoints = [
-                { title: 'Active Airport Events', url: isNetlify ? '/api/faa/airport-events' : 'https://nasstatus.faa.gov/api/airport-events' },
-                { title: 'Active En Route Events', url: isNetlify ? '/api/faa/enroute-events' : 'https://nasstatus.faa.gov/api/enroute-events' },
-                { title: 'Forecast Events', url: isNetlify ? '/api/faa/forecast-events' : 'https://nasstatus.faa.gov/api/forecast-events' },
-                { title: 'Air Traffic Control System Command Center (ATCSCC) Announcements', url: isNetlify ? '/api/faa/atcscc-messages' : 'https://nasstatus.faa.gov/api/atcscc-messages' }
+                { title: 'Airport Events', url: p('/api/faa/airport-events', 'https://nasstatus.faa.gov/api/airport-events') },
+                { title: 'En Route Events', url: p('/api/faa/enroute-events', 'https://nasstatus.faa.gov/api/enroute-events') }
             ];
 
             contentEl.innerHTML = '';
@@ -1482,10 +1769,7 @@
         if (!loadingEl || !contentEl) return;
 
         try {
-            const isNetlify = window.location.hostname.includes('netlify.app');
-            const apodUrl = isNetlify 
-                ? '/api/nasa-apod/planetary/apod?api_key=DEMO_KEY' 
-                : 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY';
+            const apodUrl = p('/api/nasa/planetary/apod?api_key=DEMO_KEY', 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
             
             const res = await fetch(apodUrl);
             if (res.ok) {
@@ -1547,9 +1831,6 @@
     }
 
     function loadAviationWeather() {
-        const isNetlify = window.location.hostname.includes('netlify.app');
-        const p = (proxy, direct) => isNetlify ? proxy : direct;
-
         const aviationItems = [
             // WPC Surface & Prog Charts (verified working)
             { title: "WPC Surface Analysis (Current)", agency: "NOAA WPC", url: p("/api/wpc/basicwx/92fndfd.gif", "https://www.wpc.ncep.noaa.gov/basicwx/92fndfd.gif") },
@@ -1572,16 +1853,25 @@
             { title: "NWS Min Temperature Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/MinT1_conus.png", "https://graphical.weather.gov/images/conus/MinT1_conus.png") },
             { title: "NWS Wind Speed Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/WindSpd1_conus.png", "https://graphical.weather.gov/images/conus/WindSpd1_conus.png") },
             { title: "NWS Weather Type Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Wx1_conus.png", "https://graphical.weather.gov/images/conus/Wx1_conus.png") },
-            { title: "NWS Sky Cover Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Sky1_conus.png", "https://graphical.weather.gov/images/conus/Sky1_conus.png") }
+            { title: "NWS Sky Cover Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Sky1_conus.png", "https://graphical.weather.gov/images/conus/Sky1_conus.png") },
+            // ----- STRATEGIC AVIATION CHARTS (AWC) -----
+            { title: "Aviation Tropical SIGWX (High)", agency: "FAA AWC", url: p("/api/awc/data/products/swh/prog_00_SWH.gif", "https://aviationweather.gov/data/products/swh/prog_00_SWH.gif") },
+            { title: "Low-Level SIGWX (Surface-FL240)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/low_00hr.gif", "https://aviationweather.gov/data/products/swl/low_00hr.gif") },
+            { title: "Mid-Level SIGWX (FL100-FL450)", agency: "FAA AWC", url: p("/api/awc/data/products/swm/mid_00hr.gif", "https://aviationweather.gov/data/products/swm/mid_00hr.gif") },
+            { title: "Current Icing Severity (Surface)", agency: "FAA AWC", url: p("/api/awc/data/products/icing/f_00_icing.gif", "https://aviationweather.gov/data/products/icing/f_00_icing.gif") },
+            { title: "Current Turbulence (GT 18,000ft)", agency: "FAA AWC", url: p("/api/awc/data/products/turb/f_00_turb.gif", "https://aviationweather.gov/data/products/turb/f_00_turb.gif") },
+            { title: "Convective SIGMET Outlook", agency: "FAA AWC", url: p("/api/awc/data/products/convective/conv_00hr.gif", "https://aviationweather.gov/data/products/convective/conv_00hr.gif") },
+            { title: "National Hazards Map", agency: "NOAA NWS", url: p("/api/nwsimg/images/hazards/hazards_conus.png", "https://www.weather.gov/images/hazards/hazards_conus.png") },
+            // ----- SATELLITE REGIONAL SECTORS -----
+            { title: "Southern Plains Sector (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/SECTOR/sp/GEOCOLOR/600x600.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/600x600.jpg") },
+            { title: "Southern Plains Sector (Infrared)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/SECTOR/sp/13/600x600.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/13/600x600.jpg") },
+            { title: "Southern Plains Sector (Water Vapor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/SECTOR/sp/09/600x600.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/09/600x600.jpg") }
         ];
 
         buildImageGrid('aviation-grid', aviationItems, 'avi');
     }
 
     function loadObservatory() {
-        const isNetlify = window.location.hostname.includes('netlify.app');
-        const p = (proxy, direct) => isNetlify ? proxy : direct;
-
         const observatoryItems = [
             // ===== NASA SOLAR DYNAMICS OBSERVATORY (9 live instruments) =====
             { title: "Solar Corona (193\u00c5 EUV)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0193.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg") },
@@ -1600,6 +1890,8 @@
             { title: "SUVI Solar EUV 195\u00c5 (Live)", agency: "NOAA GOES", url: p("/api/swpc/images/animations/suvi/primary/195/latest.png", "https://services.swpc.noaa.gov/images/animations/suvi/primary/195/latest.png") },
             { title: "SUVI Solar EUV 304\u00c5 (Live)", agency: "NOAA GOES", url: p("/api/swpc/images/animations/suvi/primary/304/latest.png", "https://services.swpc.noaa.gov/images/animations/suvi/primary/304/latest.png") },
             { title: "WSA-Enlil Solar Wind Model", agency: "NOAA SWPC", url: p("/api/swpc/images/animations/enlil/latest.jpg", "https://services.swpc.noaa.gov/images/animations/enlil/latest.jpg") },
+            { title: "Solar D-Region Absorption (DRAP)", agency: "NOAA SWPC", url: p("/api/swpc/images/animations/d-region-absorption-product/global/latest.png", "https://services.swpc.noaa.gov/images/animations/d-region-absorption-product/global/latest.png") },
+            { title: "Geospace Magnetic Field (Current)", agency: "NOAA SWPC", url: p("/api/swpc/images/animations/geospace/velocity/latest.png", "https://services.swpc.noaa.gov/images/animations/geospace/velocity/latest.png") },
             // ===== GOES FULL DISK SATELLITE =====
             { title: "GOES-East Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/678x678.jpg") },
             { title: "GOES-West Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES18/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES18/ABI/FD/GEOCOLOR/678x678.jpg") },
@@ -1610,6 +1902,8 @@
             // ===== OCEAN WEATHER =====
             { title: "Atlantic Ocean Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/A_sfc_full_ocean_color.png", "https://ocean.weather.gov/A_sfc_full_ocean_color.png") },
             { title: "Pacific Ocean Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/P_sfc_full_ocean_color.png", "https://ocean.weather.gov/P_sfc_full_ocean_color.png") },
+            { title: "Global Tsunami Activity Map", agency: "NOAA", url: p("/api/noaa-tsunami/images/tsunami_map.png", "https://www.tsunami.gov/images/tsunami_map.png") },
+            { title: "Deep-ocean Assessment (DART) Status", agency: "NOAA", url: p("/api/noaa-tsunami/images/dart_map.png", "https://www.tsunami.gov/images/dart_map.png") },
             // ===== CLIMATE OUTLOOKS (6 products) =====
             { title: "6-10 Day Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610temp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif") },
             { title: "6-10 Day Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610prcp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif") },
@@ -1623,8 +1917,6 @@
     }
 
     async function loadAwcDataFeeds() {
-        const isNetlify = window.location.hostname.includes('netlify.app');
-        const p = (proxy, direct) => isNetlify ? proxy : direct;
         const stations = 'KDFW,KDAL,KADS,KFTW,KAFW,KGKY,KRBD,KGPM,KTKI';
 
         // ---- METAR Feed ----
@@ -1660,6 +1952,30 @@
                 } else if (el) { el.innerHTML = '<span style="color:#94a3b8;">No TAF data available.</span>'; }
             }
         } catch(e) { console.log('TAF feed error:', e); }
+
+        // ---- PIREP Feed ----
+        try {
+            const pirepRes = await fetch(p(`/api/awc/api/data/pirep?ids=KDFW&distance=250&format=json`, `https://aviationweather.gov/api/data/pirep?ids=KDFW&distance=250&format=json`));
+            if (pirepRes.ok) {
+                const pireps = await pirepRes.json();
+                const el = document.getElementById('pirep-feed');
+                if (el) {
+                    if (pireps.length > 0) {
+                        el.innerHTML = pireps.slice(0, 15).map(pr => {
+                            let typeColor = '#94a3b8';
+                            if (pr.reportType === 'UUA') typeColor = '#ef4444'; // Urgent
+                            return `<div style="padding: 8px; margin-bottom: 6px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid ${typeColor};">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                    <span style="font-weight:700; color: ${typeColor};">${pr.reportType || 'PIREP'}</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">${pr.obsTime || ''}</span>
+                                </div>
+                                <div style="margin-top: 4px; font-size: 0.82rem; opacity: 0.9; font-family: 'Courier New', monospace;">${pr.rawOb}</div>
+                            </div>`;
+                        }).join('');
+                    } else { el.innerHTML = '<div style="color: #4ade80;">No PIREPs within 250nm.</div>'; }
+                }
+            }
+        } catch(e) { console.log('PIREP feed error:', e); }
 
         // ---- SIGMET Feed ----
         try {
@@ -1709,7 +2025,13 @@
         try {
             const cwaRes = await fetch(p('/api/awc/api/data/cwa?format=json', 'https://aviationweather.gov/api/data/cwa?format=json'));
             if (cwaRes.ok) {
-                const cwas = await cwaRes.json();
+                const text = await cwaRes.text();
+                if (!text || text.trim() === "") {
+                     const el = document.getElementById('cwa-feed');
+                     if (el) el.innerHTML = '<div style="color: #4ade80; font-weight: 600;">✅ No active Center Weather Advisories.</div>';
+                     return;
+                }
+                const cwas = JSON.parse(text);
                 const el = document.getElementById('cwa-feed');
                 if (el) {
                     if (cwas.length > 0) {
@@ -1854,6 +2176,8 @@
                     loadAwcDataFeeds();
                     loadObservatory();
                     fetchNasStatus();
+                    updateSkewT();
+                    updateNotams();
                 }, 300000); 
                 isInitialized = true;
             }
@@ -1861,7 +2185,7 @@
             // Fetch Hub METARs non-blocking
             const hubIds = "KCLT,KORD,KMIA,KJFK,KLGA,KDCA,KLAX,KPHX,KDFW";
             const hubMetarUrl = `https://aviationweather.gov/api/data/metar?ids=${hubIds}&format=raw`;
-            fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(hubMetarUrl)}`)
+            fetch(p(`/api/awc/api/data/metar?ids=${hubIds}&format=raw`, hubMetarUrl))
                 .catch(() => fetch(hubMetarUrl))
                 .then(res => res.text())
                 .then(text => {
@@ -1887,15 +2211,15 @@
             const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${STATION_ID}&format=raw`;
             const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${STATION_ID}&format=raw`;
             const [pointRes, obsRes, rawMetarRes, tafRes, sunRes] = await Promise.all([
-                fetch(`https://api.weather.gov/points/${LAT},${LON}`),
-                fetch(`https://api.weather.gov/stations/${STATION_ID}/observations/latest`),
-                fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(metarUrl)}`)
+                fetch(p(`/api/nws-api/points/${LAT},${LON}`, `https://api.weather.gov/points/${LAT},${LON}`)),
+                fetch(p(`/api/nws-api/stations/${STATION_ID}/observations/latest`, `https://api.weather.gov/stations/${STATION_ID}/observations/latest`)),
+                fetch(p(`/api/awc/api/data/metar?ids=${STATION_ID}&format=raw`, metarUrl))
                     .catch(() => fetch(metarUrl))
                     .catch(() => new Response("METAR data unavailable.", { status: 500 })),
-                fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(tafUrl)}`)
+                fetch(p(`/api/awc/api/data/taf?ids=${STATION_ID}&format=raw`, tafUrl))
                     .catch(() => fetch(tafUrl)) // Fallback to direct fetch if proxy fails
                     .catch(() => new Response("TAF data unavailable.", { status: 500 })),
-                fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`)
+                fetch(p(`/api/sunrise-sunset/json?lat=${LAT}&lng=${LON}&formatted=0`, `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`))
                     .catch(() => new Response(JSON.stringify({results:{}}), { status: 200 }))
             ]);
 
@@ -1934,6 +2258,9 @@
             
             renderCharts(rawGridData.properties);
             renderForecast(forecastData.properties.periods);
+            updateSkewT();
+            updateNotams();
+            visualizeTaf(tafText);
 
             statusEl.textContent = "System Live";
             statusEl.style.color = "#4ade80";
@@ -2044,6 +2371,122 @@
                 </div>
             `;
             listEl.appendChild(card);
+        });
+    }
+
+    function updateSkewT() {
+        const skewImg = document.getElementById('skewt-img');
+        const skewStatus = document.getElementById('skewt-status');
+        const url = p(`/api/awc/data/sounding/?type=model&loc=${STATION_ID}&run=0&time=0`, `https://www.aviationweather.gov/data/sounding/?type=model&loc=${STATION_ID}&run=0&time=0`);
+        
+        skewImg.onload = () => {
+            skewImg.style.display = 'inline-block';
+            skewStatus.textContent = `Valid for ${STATION_ID} (Model-Based)`;
+        };
+        skewImg.onerror = () => {
+            skewStatus.textContent = "Sounding data currently unavailable.";
+        };
+        skewImg.src = url;
+    }
+
+    async function updateNotams() {
+        const el = document.getElementById('notam-critical-feed');
+        if (!el) return;
+        try {
+            const res = await fetch(p(`/api/awc/api/data/notam?ids=${STATION_ID}&format=json`, `https://aviationweather.gov/api/data/notam?ids=${STATION_ID}&format=json`));
+            if (!res.ok) throw new Error("NOTAM API error");
+            const data = await res.json();
+            
+            if (!data || data.length === 0) {
+                el.innerHTML = '<span style="color:#22c55e;">No critical NOTAMs found.</span>';
+                return;
+            }
+
+            const critical = data.filter(n => {
+                const text = n.raw.toUpperCase();
+                return text.includes("CLOSED") || text.includes("RWY") || text.includes("TAXIWAY") || text.includes("TWY") || text.includes("U/S") || text.includes("WIP");
+            });
+
+            if (critical.length === 0) {
+                el.innerHTML = '<span style="color:#22c55e;">No critical runway/taxiway closures found.</span>';
+            } else {
+                el.innerHTML = critical.map(n => `
+                    <div style="padding: 8px; margin-bottom: 8px; border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.1);">
+                        <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">CRITICAL NOTICE</div>
+                        <div style="font-family: monospace; font-size: 0.8rem; color: var(--text-main);">${n.raw}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            el.innerHTML = '<span style="color:#f87171;">Failed to parse NOTAMs.</span>';
+        }
+    }
+
+    function visualizeTaf(tafText) {
+        const canvas = document.getElementById('taf-timeline-chart');
+        if (!canvas || !tafText || tafText.includes("unavailable")) return;
+
+        const lines = tafText.split('\n');
+        const changeGroups = [];
+        
+        lines.forEach((line, index) => {
+            let type = "BASE";
+            const upper = line.trim().toUpperCase();
+            if (upper.startsWith("FM")) type = "FROM";
+            else if (upper.startsWith("BECMG")) type = "BECMG";
+            else if (upper.startsWith("TEMPO")) type = "TEMPO";
+            else if (upper.startsWith("PROB")) type = "PROB";
+            
+            if (index === 0 || type !== "BASE") {
+                changeGroups.push({ type, text: line.trim() });
+            }
+        });
+
+        if (changeGroups.length === 0) return;
+
+        const labels = changeGroups.map(g => g.type);
+        const data = changeGroups.map((g, i) => 1); // Equal width for now
+        const colors = changeGroups.map(g => {
+            if (g.type === "BASE") return "#38bdf8";
+            if (g.type === "FROM") return "#4ade80";
+            if (g.type === "TEMPO") return "#fb923c";
+            return "#94a3b8";
+        });
+
+        if (tafTimelineChart) tafTimelineChart.destroy();
+
+        tafTimelineChart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderRadius: 4,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => changeGroups[context.dataIndex].text
+                        }
+                    }
+                },
+                scales: {
+                    x: { display: false, stacked: true },
+                    y: {
+                        stacked: true,
+                        ticks: { color: '#94a3b8', font: { size: 9, weight: 'bold' } },
+                        grid: { display: false }
+                    }
+                }
+            }
         });
     }
 
