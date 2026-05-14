@@ -3,3 +3,21 @@
   to = "https://nasstatus.faa.gov/api/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/txdot/*"
+  to = "https://its.txdot.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/wpc/*"
+  to = "https://www.wpc.ncep.noaa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/spc/*"
+  to = "https://www.spc.noaa.gov/:splat"
+  status = 200
+  force = true
