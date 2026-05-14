@@ -99,3 +99,9 @@
   to = "https://www.aviationweather.gov/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/graphwx/*"
+  to = "https://graphical.weather.gov/:splat"
+  status = 200
+  force = true
