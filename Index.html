@@ -716,9 +716,12 @@
         }
 
         function tryLoad() {
-            let finalUrl = `${baseurl}${baseurl.includes('?') ? '&' : '?'}v=${new Date().getTime()}`;
-            if (proxyLevel === 1) finalUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-            else if (proxyLevel === 2) finalUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetUrl)}`;
+            const cacheBuster = `v=${new Date().getTime()}`;
+            const urlWithBuster = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}${cacheBuster}`;
+            let finalUrl = `${baseurl}${baseurl.includes('?') ? '&' : '?'}${cacheBuster}`;
+            
+            if (proxyLevel === 1) finalUrl = `https://corsproxy.io/?${encodeURIComponent(urlWithBuster)}`;
+            else if (proxyLevel === 2) finalUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urlWithBuster)}`;
 
             const imgTester = new Image();
             imgTester.onload = function() {
@@ -752,6 +755,8 @@
     let tempChart, windChart, moistureChart, eventsChart, pressureChart, visChart, windDirChart, precipChart, tafTimelineChart; // Declare before use
 
     let radarMap;
+    // Global Layer Groups to prevent ReferenceErrors
+    let nexrad, velocityLayer, precipLayer, stormCellLayer, lightningLayer, lightningHeatLayer, windStreamLayer, cwaLayer, regionalMetarLayer, rvSatellite, rvNowcast, hazardLayer, webcamLayerGroup, hubLayerGroup;
     const hubMarkers = {};
     const hubCoords = {
         KCLT: [35.2140, -80.9431],
@@ -1218,15 +1223,15 @@
         darkMap.addTo(radarMap);
 
         // New dynamic layers
-        const lightningLayer = L.layerGroup();
-        const lightningHeatLayer = L.heatLayer([], { radius: 25, blur: 15, maxZoom: 10 });
-        const stormCellLayer = L.layerGroup();
-        const windStreamLayer = L.layerGroup();
-        const cwaLayer = L.layerGroup();
-        const regionalMetarLayer = L.layerGroup();
-        const rvSatellite = L.layerGroup();
-        const rvNowcast = L.layerGroup();
-        const nexrad = L.layerGroup().addTo(radarMap);
+        lightningLayer = L.layerGroup();
+        lightningHeatLayer = L.heatLayer([], { radius: 25, blur: 15, maxZoom: 10 });
+        stormCellLayer = L.layerGroup();
+        windStreamLayer = L.layerGroup();
+        cwaLayer = L.layerGroup();
+        regionalMetarLayer = L.layerGroup();
+        rvSatellite = L.layerGroup();
+        rvNowcast = L.layerGroup();
+        nexrad = L.layerGroup().addTo(radarMap);
 
         function updateRadarLayer() {
             fetch(p('/api/rainviewer/public/weather-maps.json', 'https://api.rainviewer.com/public/weather-maps.json'))
@@ -1234,10 +1239,12 @@
                 .then(data => {
                     if (!data || !data.radar) return;
                     const host = data.host;
-                    const lastRadar = (data.radar.past && data.radar.past.length) ? data.radar.past[data.radar.past.length - 1].path : null;
-                    const lastSat = (data.satellite && data.satellite.infrared && data.satellite.infrared.length) ? data.satellite.infrared[data.satellite.infrared.length - 1].path : null;
-                    const nowcastRadar = (data.radar.nowcast && data.radar.nowcast.length) ? data.radar.nowcast[0].path : null;
-                    
+                    if (!host) return;
+
+                    const lastRadar = (data.radar.past && Array.isArray(data.radar.past) && data.radar.past.length > 0) ? data.radar.past[data.radar.past.length - 1].path : null;
+                    const lastSat = (data.satellite && data.satellite.infrared && Array.isArray(data.satellite.infrared) && data.satellite.infrared.length > 0) ? data.satellite.infrared[data.satellite.infrared.length - 1].path : null;
+                    const nowcastRadar = (data.radar.nowcast && Array.isArray(data.radar.nowcast) && data.radar.nowcast.length > 0) ? data.radar.nowcast[0].path : null;
+
                     if (lastRadar) {
                         nexrad.clearLayers();
                         L.tileLayer(`${host}${lastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
@@ -1350,7 +1357,8 @@
 
         function fetchCWA() {
             fetch(p('/api/awc/api/data/cwa?format=geojson', 'https://aviationweather.gov/api/data/cwa?format=geojson'))
-                .then(res => res.json())
+                .then(res => res.ok ? res.text() : Promise.reject('CWA fetch failed'))
+                .then(text => (text && text.trim()) ? JSON.parse(text) : { features: [] })
                 .then(data => {
                     cwaLayer.clearLayers();
                     L.geoJSON(data, {
@@ -1384,7 +1392,7 @@
                 }).catch(() => {});
         }
 
-        const hubLayerGroup = L.layerGroup().addTo(radarMap);
+        hubLayerGroup = L.layerGroup().addTo(radarMap);
 
         const createHubIcon = (id) => L.divIcon({
             className: 'custom-hub-icon',
@@ -1410,12 +1418,13 @@
             "OpenStreetMap": openStreetMap,
             "Topographic Map": topoMap
         };
-        const hazardLayer = L.layerGroup().addTo(radarMap);
+        hazardLayer = L.layerGroup().addTo(radarMap);
         
         // Fetch SIGMETs (Proxied)
         function fetchSigmets() {
             fetch(p('/api/awc/api/data/sigmet?format=geojson', 'https://aviationweather.gov/api/data/sigmet?format=geojson'))
-                .then(res => res.json())
+                .then(res => res.ok ? res.text() : Promise.reject('SIGMET fetch failed'))
+                .then(text => (text && text.trim()) ? JSON.parse(text) : { features: [] })
                 .then(data => {
                     L.geoJSON(data, {
                         style: { color: '#ef4444', weight: 2, fillOpacity: 0.2 },
@@ -1876,14 +1885,14 @@
             { title: "NWS Wind Speed Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/WindSpd1_conus.png", "https://graphical.weather.gov/images/conus/WindSpd1_conus.png") },
             { title: "NWS Weather Type Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Wx1_conus.png", "https://graphical.weather.gov/images/conus/Wx1_conus.png") },
             { title: "NWS Sky Cover Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Sky1_conus.png", "https://graphical.weather.gov/images/conus/Sky1_conus.png") },
-            // ----- STRATEGIC AVIATION CHARTS (AWC) -----
-            { title: "Aviation Tropical SIGWX (High)", agency: "FAA AWC", url: p("/api/awc/data/products/swh/prog_00_SWH.gif", "https://aviationweather.gov/data/products/swh/prog_00_SWH.gif") },
-            { title: "Low-Level SIGWX (Surface-FL240)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/low_00hr.gif", "https://aviationweather.gov/data/products/swl/low_00hr.gif") },
-            { title: "Mid-Level SIGWX (FL100-FL450)", agency: "FAA AWC", url: p("/api/awc/data/products/swm/mid_00hr.gif", "https://aviationweather.gov/data/products/swm/mid_00hr.gif") },
-            { title: "Current Icing Severity (Surface)", agency: "FAA AWC", url: p("/api/awc/data/products/icing/f_00_icing.gif", "https://aviationweather.gov/data/products/icing/f_00_icing.gif") },
-            { title: "Current Turbulence (GT 18,000ft)", agency: "FAA AWC", url: p("/api/awc/data/products/turb/f_00_turb.gif", "https://aviationweather.gov/data/products/turb/f_00_turb.gif") },
-            { title: "Convective SIGMET Outlook", agency: "FAA AWC", url: p("/api/awc/data/products/convective/conv_00hr.gif", "https://aviationweather.gov/data/products/convective/conv_00hr.gif") },
-            { title: "National Hazards Map", agency: "NOAA NWS", url: p("/api/nwsimg/images/hazards/hazards_conus.png", "https://www.weather.gov/images/hazards/hazards_conus.png") },
+            // ----- STRATEGIC AVIATION & HAZARD CHARTS -----
+            { title: "US Surface Analysis (Current)", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad1.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif") },
+            { title: "Day 1 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad2.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif") },
+            { title: "Day 2 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad3.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif") },
+            { title: "Day 3 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/basicwx/92fndfd.gif", "https://www.wpc.ncep.noaa.gov/basicwx/92fndfd.gif") },
+            { title: "SPC Day 1 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day1otlk.gif", "https://www.spc.noaa.gov/products/outlook/day1otlk.gif") },
+            { title: "SPC Day 2 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day2otlk.gif", "https://www.spc.noaa.gov/products/outlook/day2otlk.gif") },
+            { title: "National Rain/Snow Outlook", agency: "NOAA WPC", url: p("/api/wpc/qpf/94ewbg.gif", "https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif") },
             // ----- SATELLITE REGIONAL SECTORS -----
             { title: "Southern Plains Sector (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/SECTOR/sp/GEOCOLOR/600x600.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/600x600.jpg") },
             { title: "Southern Plains Sector (Infrared)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/SECTOR/sp/13/600x600.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/13/600x600.jpg") },
@@ -1945,7 +1954,8 @@
         try {
             const metarRes = await fetch(p(`/api/awc/api/data/metar?ids=${stations}&format=json`, `https://aviationweather.gov/api/data/metar?ids=${stations}&format=json`));
             if (metarRes.ok) {
-                const metars = await metarRes.json();
+                const metarText = await metarRes.text();
+                const metars = (metarText && metarText.trim()) ? JSON.parse(metarText) : [];
                 const el = document.getElementById('metar-feed');
                 if (el && metars.length > 0) {
                     el.innerHTML = metars.map(m => {
@@ -1979,7 +1989,8 @@
         try {
             const pirepRes = await fetch(p(`/api/awc/api/data/pirep?id=KDFW&distance=250&format=json`, `https://aviationweather.gov/api/data/pirep?id=KDFW&distance=250&format=json`));
             if (pirepRes.ok) {
-                const pireps = await pirepRes.json();
+                const pirepText = await pirepRes.text();
+                const pireps = (pirepText && pirepText.trim()) ? JSON.parse(pirepText) : [];
                 const el = document.getElementById('pirep-feed');
                 if (el) {
                     if (pireps.length > 0) {
