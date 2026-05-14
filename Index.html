@@ -689,6 +689,62 @@
     const isNetlify = window.location.hostname.includes('netlify.app');
     const p = (proxy, direct) => isNetlify ? proxy : direct;
 
+    // ----- GLOBAL IMAGE FALLBACK LOADER -----
+    // Tries local proxy first, then falls back to free CORS proxies if blocked/failed.
+    function loadWithFallback(imgEl, statusEl, baseurl, successMsg) {
+        if (!imgEl) return;
+        let proxyLevel = 0;
+        const proxyMap = {
+            '/api/spc/': 'https://www.spc.noaa.gov/',
+            '/api/wpc/': 'https://www.wpc.ncep.noaa.gov/',
+            '/api/awc/': 'https://aviationweather.gov/',
+            '/api/swpc/': 'https://services.swpc.noaa.gov/',
+            '/api/nwsimg/': 'https://www.weather.gov/',
+            '/api/noaa-tsunami/': 'https://www.tsunami.gov/',
+            '/api/nesdis/': 'https://cdn.star.nesdis.noaa.gov/',
+            '/api/graphwx/': 'https://graphical.weather.gov/',
+            '/api/nhc/': 'https://www.nhc.noaa.gov/',
+            '/api/opc/': 'https://ocean.weather.gov/'
+        };
+        
+        let targetUrl = baseurl;
+        for (const [key, value] of Object.entries(proxyMap)) {
+            if (baseurl.startsWith(key)) {
+                targetUrl = baseurl.replace(key, value);
+                break;
+            }
+        }
+
+        function tryLoad() {
+            let finalUrl = `${baseurl}${baseurl.includes('?') ? '&' : '?'}v=${new Date().getTime()}`;
+            if (proxyLevel === 1) finalUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            else if (proxyLevel === 2) finalUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetUrl)}`;
+
+            const imgTester = new Image();
+            imgTester.onload = function() {
+                imgEl.src = this.src;
+                imgEl.style.display = 'block';
+                if (statusEl) {
+                    statusEl.textContent = successMsg || 'Live Feed Active';
+                    statusEl.style.color = '#4ade80';
+                    statusEl.style.display = 'none'; // Hide status text on success
+                }
+            };
+            imgTester.onerror = function() {
+                proxyLevel++;
+                if (proxyLevel <= 2) {
+                    tryLoad();
+                } else if (statusEl) {
+                    statusEl.textContent = "Feed unavailable or blocked.";
+                    statusEl.style.color = "#f87171";
+                    statusEl.style.display = 'block';
+                }
+            };
+            imgTester.src = finalUrl;
+        }
+        tryLoad();
+    }
+
     const statusEl = document.getElementById('status');
     const listEl = document.getElementById('forecast-list');
 
@@ -1083,51 +1139,8 @@
         
         const spcUrl = p('/api/spc/products/outlook/day1otlk.gif', 'https://www.spc.noaa.gov/products/outlook/day1otlk.gif');
         const progUrl = p('/api/wpc/noaa/noaad1.gif', 'https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif');
-        const wpcUrl = p('/api/wpc/basicwx/9fndfd.gif', 'https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif');
+        const wpcUrl = p('/api/wpc/basicwx/92fndfd.gif', 'https://www.wpc.ncep.noaa.gov/basicwx/92fndfd.gif');
         
-        function loadWithFallback(imgEl, statusEl, baseurl, successMsg) {
-            let proxyLevel = 0;
-            // Map the /api/ local proxy to the real domain for the external proxies
-            const proxyMap = {
-                '/api/spc/': 'https://www.spc.noaa.gov/',
-                '/api/wpc/': 'https://www.wpc.ncep.noaa.gov/'
-            };
-            
-            let targetUrl = baseurl;
-            for (const [key, value] of Object.entries(proxyMap)) {
-                if (baseurl.startsWith(key)) {
-                    targetUrl = baseurl.replace(key, value);
-                    break;
-                }
-            }
-
-            function tryLoad() {
-                let finalUrl = `${baseurl}?v=${new Date().getTime()}`;
-                
-                if (proxyLevel === 1) finalUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-                else if (proxyLevel === 2) finalUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetUrl)}`;
-
-                const imgTester = new Image();
-                imgTester.onload = function() {
-                    imgEl.src = this.src;
-                    imgEl.style.display = 'block';
-                    statusEl.textContent = successMsg;
-                    statusEl.style.color = '#4ade80';
-                };
-                imgTester.onerror = function() {
-                    proxyLevel++;
-                    if (proxyLevel <= 2) {
-                        tryLoad();
-                    } else {
-                        statusEl.textContent = "Chart unavailable or blocked.";
-                        statusEl.style.color = "#f87171";
-                    }
-                };
-                imgTester.src = finalUrl;
-            }
-            tryLoad();
-        }
-
         if(spcImg) loadWithFallback(spcImg, spcStatus, spcUrl, 'Live SPC Outlook Active');
         if(progImg) loadWithFallback(progImg, progStatus, progUrl, 'Live Surface Prog Active');
         if(wpcImg) loadWithFallback(wpcImg, wpcStatus, wpcUrl, 'Live WPC Chart Active');
@@ -1213,36 +1226,44 @@
         const regionalMetarLayer = L.layerGroup();
         const rvSatellite = L.layerGroup();
         const rvNowcast = L.layerGroup();
+        const nexrad = L.layerGroup().addTo(radarMap);
 
         function updateRadarLayer() {
             fetch(p('/api/rainviewer/public/weather-maps.json', 'https://api.rainviewer.com/public/weather-maps.json'))
                 .then(res => res.json())
                 .then(data => {
+                    if (!data || !data.radar) return;
                     const host = data.host;
-                    const lastRadar = data.radar.past[data.radar.past.length - 1].path;
-                    const lastSat = data.satellite.infrared[data.satellite.infrared.length - 1].path;
-                    const nowcastRadar = data.radar.nowcast[0].path;
+                    const lastRadar = (data.radar.past && data.radar.past.length) ? data.radar.past[data.radar.past.length - 1].path : null;
+                    const lastSat = (data.satellite && data.satellite.infrared && data.satellite.infrared.length) ? data.satellite.infrared[data.satellite.infrared.length - 1].path : null;
+                    const nowcastRadar = (data.radar.nowcast && data.radar.nowcast.length) ? data.radar.nowcast[0].path : null;
                     
-                    nexrad.clearLayers();
-                    L.tileLayer(`${host}${lastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
-                        opacity: 0.75,
-                        transparent: true,
-                        attribution: 'Smooth Radar Composite &copy; <a href="https://www.rainviewer.com/">RainViewer</a>'
-                    }).addTo(nexrad);
+                    if (lastRadar) {
+                        nexrad.clearLayers();
+                        L.tileLayer(`${host}${lastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
+                            opacity: 0.75,
+                            transparent: true,
+                            attribution: 'Smooth Radar Composite &copy; <a href="https://www.rainviewer.com/">RainViewer</a>'
+                        }).addTo(nexrad);
+                    }
 
-                    rvSatellite.clearLayers();
-                    L.tileLayer(`${host}${lastSat}/256/{z}/{x}/{y}/0/1_1.png`, {
-                        opacity: 0.45,
-                        transparent: true,
-                        attribution: 'Infrared Satellite &copy; RainViewer'
-                    }).addTo(rvSatellite);
+                    if (lastSat) {
+                        rvSatellite.clearLayers();
+                        L.tileLayer(`${host}${lastSat}/256/{z}/{x}/{y}/0/1_1.png`, {
+                            opacity: 0.45,
+                            transparent: true,
+                            attribution: 'Infrared Satellite &copy; RainViewer'
+                        }).addTo(rvSatellite);
+                    }
 
-                    rvNowcast.clearLayers();
-                    L.tileLayer(`${host}${nowcastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
-                        opacity: 0.6,
-                        transparent: true,
-                        attribution: 'Future Radar (Nowcast) &copy; RainViewer'
-                    }).addTo(rvNowcast);
+                    if (nowcastRadar) {
+                        rvNowcast.clearLayers();
+                        L.tileLayer(`${host}${nowcastRadar}/256/{z}/{x}/{y}/2/1_1.png`, {
+                            opacity: 0.6,
+                            transparent: true,
+                            attribution: 'Future Radar (Nowcast) &copy; RainViewer'
+                        }).addTo(rvNowcast);
+                    }
                 }).catch(e => console.log("RainViewer fetch failed", e));
         }
         updateRadarLayer();
@@ -1825,7 +1846,8 @@
         setTimeout(() => {
             items.forEach((item, index) => {
                 const img = document.getElementById(`${prefix}-img-${index}`);
-                if (img) img.src = `${item.url}?v=${new Date().getTime()}`;
+                const status = document.getElementById(`${prefix}-status-${index}`);
+                if (img) loadWithFallback(img, status, item.url);
             });
         }, 100);
     }
@@ -1955,7 +1977,7 @@
 
         // ---- PIREP Feed ----
         try {
-            const pirepRes = await fetch(p(`/api/awc/api/data/pirep?ids=KDFW&distance=250&format=json`, `https://aviationweather.gov/api/data/pirep?ids=KDFW&distance=250&format=json`));
+            const pirepRes = await fetch(p(`/api/awc/api/data/pirep?id=KDFW&distance=250&format=json`, `https://aviationweather.gov/api/data/pirep?id=KDFW&distance=250&format=json`));
             if (pirepRes.ok) {
                 const pireps = await pirepRes.json();
                 const el = document.getElementById('pirep-feed');
