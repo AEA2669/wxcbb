@@ -440,6 +440,36 @@
         <div id="nas-content" style="display: none; flex-direction: column; gap: 15px;"></div>
     </div>
 
+    <h2 class="section-title">🔭 NASA Astronomy Picture of the Day</h2>
+    <div id="apod-panel" style="margin-bottom: 30px; background: var(--panel-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 10px;">
+        <div id="apod-loading" style="color: var(--accent-orange); font-size: 0.9rem;">Contacting NASA Goddard Space Flight Center...</div>
+        <div id="apod-content" style="display: none;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div id="apod-media-container" style="width: 100%; max-width: 960px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+                    <img id="apod-img" src="" alt="NASA APOD" style="width: 100%; display: block; object-fit: contain; max-height: 600px;">
+                </div>
+                <div style="max-width: 960px; width: 100%;">
+                    <h3 id="apod-title" style="margin: 0 0 5px; font-size: 1.2rem; color: var(--accent-blue);"></h3>
+                    <div id="apod-date" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;"></div>
+                    <p id="apod-desc" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main); margin: 0;"></p>
+                    <div style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">Source: NASA/GSFC — Astronomy Picture of the Day</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section-title">✈️ Aviation Weather Intelligence</h2>
+    <div style="margin-bottom: 30px; background: var(--panel-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 10px;">
+        <div id="aviation-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+        </div>
+    </div>
+
+    <h2 class="section-title">🌍 NASA & NOAA Global Observatory</h2>
+    <div class="observatory-panel" style="margin-bottom: 30px; background: var(--panel-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 10px;">
+        <div id="observatory-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+        </div>
+    </div>
+
     <h2 class="section-title">Extended Operational Forecast</h2>
     <div class="forecast-list" id="forecast-list"></div>
 </div>
@@ -1219,11 +1249,147 @@
             loadingEl.style.display = 'none';
             contentEl.style.display = 'flex';
             
-        } catch (e) {
-            loadingEl.textContent = 'Failed to load NAS status.';
-            loadingEl.style.color = '#f87171';
-            console.log('NAS Status Error:', e);
+        } catch (error) {
+            console.error("Critical NAS fetch error:", error);
+            contentEl.innerHTML = `<div style="color: #f87171;">Unable to connect to FAA NAS Status endpoints. Retrying...</div>`;
+            loadingEl.style.display = 'none';
+            contentEl.style.display = 'flex';
         }
+    }
+
+    async function loadNasaApod() {
+        const loadingEl = document.getElementById('apod-loading');
+        const contentEl = document.getElementById('apod-content');
+        const imgEl = document.getElementById('apod-img');
+        const titleEl = document.getElementById('apod-title');
+        const dateEl = document.getElementById('apod-date');
+        const descEl = document.getElementById('apod-desc');
+        const mediaContainer = document.getElementById('apod-media-container');
+        if (!loadingEl || !contentEl) return;
+
+        try {
+            const isNetlify = window.location.hostname.includes('netlify.app');
+            const apodUrl = isNetlify 
+                ? '/api/nasa-apod/planetary/apod?api_key=DEMO_KEY' 
+                : 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY';
+            
+            const res = await fetch(apodUrl);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.media_type === 'video') {
+                    mediaContainer.innerHTML = `<iframe src="${data.url}" width="100%" height="500" frameborder="0" allowfullscreen style="display:block;"></iframe>`;
+                } else {
+                    imgEl.src = data.hdurl || data.url;
+                    imgEl.alt = data.title;
+                }
+                titleEl.textContent = data.title || 'NASA APOD';
+                dateEl.textContent = data.date || '';
+                descEl.textContent = data.explanation || '';
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+            } else {
+                loadingEl.textContent = 'NASA APOD unavailable.';
+                loadingEl.style.color = '#f87171';
+            }
+        } catch (e) {
+            console.log('APOD fetch error:', e);
+            loadingEl.textContent = 'NASA APOD unavailable.';
+            loadingEl.style.color = '#f87171';
+        }
+    }
+
+    function buildImageGrid(gridId, items, prefix) {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+
+        let html = '';
+        items.forEach((item, index) => {
+            const badgeColor = item.agency.includes('NASA') ? '#e63946' : 
+                               item.agency.includes('FAA') || item.agency.includes('AWC') ? '#2563eb' : 
+                               item.agency.includes('SPC') ? '#d97706' : 'var(--accent-blue)';
+            html += `
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'" onmouseleave="this.style.transform='none'; this.style.boxShadow='none'">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); letter-spacing: 0.3px;">${item.title}</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: ${badgeColor}; color: #fff; border-radius: 10px; font-weight: 600; letter-spacing: 0.5px; white-space: nowrap;">${item.agency}</span>
+                </div>
+                <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #f8f9fa; min-height: 250px; position: relative;">
+                    <span id="${prefix}-status-${index}" style="position: absolute; color: #888; font-size: 0.85rem;">Acquiring Data...</span>
+                    <img id="${prefix}-img-${index}" src="" alt="${item.title}" style="max-width: 100%; max-height: 420px; display: none; object-fit: contain; z-index: 1; padding: 4px;" 
+                        onload="this.style.display='block'; document.getElementById('${prefix}-status-${index}').style.display='none';" 
+                        onerror="document.getElementById('${prefix}-status-${index}').textContent='Source Offline'; document.getElementById('${prefix}-status-${index}').style.color='#f87171';">
+                </div>
+            </div>`;
+        });
+        
+        grid.innerHTML = html;
+
+        setTimeout(() => {
+            items.forEach((item, index) => {
+                const img = document.getElementById(`${prefix}-img-${index}`);
+                if (img) img.src = `${item.url}?v=${new Date().getTime()}`;
+            });
+        }, 100);
+    }
+
+    function loadAviationWeather() {
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        const p = (proxy, direct) => isNetlify ? proxy : direct;
+
+        const aviationItems = [
+            { title: "IFR/VFR Conditions (Current)", agency: "FAA AWC", url: p("/api/awc/data/products/progs/F007_wpc_prog.gif", "https://aviationweather.gov/data/products/progs/F007_wpc_prog.gif") },
+            { title: "Turbulence Forecast (FL240-FL390)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/turb_sigwx_conus.gif", "https://aviationweather.gov/data/products/swl/turb_sigwx_conus.gif") },
+            { title: "Icing Forecast (Surface-FL240)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/ice_sigwx_conus.gif", "https://aviationweather.gov/data/products/swl/ice_sigwx_conus.gif") },
+            { title: "Low-Level Significant Weather", agency: "FAA AWC", url: p("/api/awc/data/products/swl/llsgwx_conus.gif", "https://aviationweather.gov/data/products/swl/llsgwx_conus.gif") },
+            { title: "Ceiling & Visibility Analysis", agency: "FAA AWC", url: p("/api/awc/data/products/swl/cva_conus.gif", "https://aviationweather.gov/data/products/swl/cva_conus.gif") },
+            { title: "SPC Day 2 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day2otlk.gif", "https://www.spc.noaa.gov/products/outlook/day2otlk.gif") },
+            { title: "SPC Day 3 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day3otlk.gif", "https://www.spc.noaa.gov/products/outlook/day3otlk.gif") },
+            { title: "Current SPC Watches", agency: "NOAA SPC", url: p("/api/spc/products/watch/validww.png", "https://www.spc.noaa.gov/products/watch/validww.png") },
+            { title: "SPC Fire Weather Outlook", agency: "NOAA SPC", url: p("/api/spc/products/fire_wx/fwdy1.gif", "https://www.spc.noaa.gov/products/fire_wx/fwdy1.gif") },
+            { title: "WPC Surface Analysis (Current)", agency: "NOAA WPC", url: p("/api/wpc/basicwx/9fndfd.gif", "https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif") }
+        ];
+
+        buildImageGrid('aviation-grid', aviationItems, 'avi');
+    }
+
+    function loadObservatory() {
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        const p = (proxy, direct) => isNetlify ? proxy : direct;
+
+        const observatoryItems = [
+            // NASA Solar & Space
+            { title: "Solar Corona (193\u00c5 EUV)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0193.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg") },
+            { title: "Solar Chromosphere (304\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0304.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg") },
+            { title: "Solar Magnetic Field (HMI)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMII.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMII.jpg") },
+            { title: "Solar Active Regions (171\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0171.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0171.jpg") },
+            { title: "Sun Magnetogram (HMI)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMIBC.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIBC.jpg") },
+            // NOAA Space Weather
+            { title: "Aurora Forecast (Northern Hemisphere)", agency: "NOAA SWPC", url: p("/api/swpc/images/aurora-forecast-northern-hemisphere.jpg", "https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg") },
+            { title: "Planetary K-Index (Geomagnetic)", agency: "NOAA SWPC", url: p("/api/swpc/images/planetary-k-index.gif", "https://services.swpc.noaa.gov/images/planetary-k-index.gif") },
+            { title: "Solar Wind Speed & Density", agency: "NOAA SWPC", url: p("/api/swpc/images/ace-mag-swepam-24-hour.gif", "https://services.swpc.noaa.gov/images/ace-mag-swepam-24-hour.gif") },
+            { title: "X-Ray Flux (Solar Flares)", agency: "NOAA SWPC", url: p("/api/swpc/images/goes-xray-flux.gif", "https://services.swpc.noaa.gov/images/goes-xray-flux.gif") },
+            // NOAA Earth & Weather
+            { title: "GOES-East Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/678x678.jpg") },
+            { title: "GOES-West Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES18/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES18/ABI/FD/GEOCOLOR/678x678.jpg") },
+            { title: "GOES-East Infrared (Band 10)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/10/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/10/625x375.jpg") },
+            { title: "Atlantic Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_atl_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_atl_5d0.png") },
+            { title: "Pacific Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_pac_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_pac_5d0.png") },
+            { title: "National Hazard Map (Active Alerts)", agency: "NOAA NWS", url: p("/api/nws/wwamap/png/US.png", "https://forecast.weather.gov/wwamap/png/US.png") },
+            // NOAA Climate & Precipitation
+            { title: "National QPF (Day 1-5 Precip)", agency: "NOAA WPC", url: p("/api/wpc/qpf/p120i.gif", "https://www.wpc.ncep.noaa.gov/qpf/p120i.gif") },
+            { title: "Excessive Rainfall Outlook", agency: "NOAA WPC", url: p("/api/wpc/qpf/94ewbg.gif", "https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif") },
+            { title: "WPC Day 2 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad2.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif") },
+            { title: "6-10 Day Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610temp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif") },
+            { title: "6-10 Day Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610prcp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif") },
+            { title: "8-14 Day Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/814day/814temp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif") },
+            { title: "8-14 Day Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/814day/814prcp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif") },
+            // SPC & OPC
+            { title: "Active Mesoscale Discussions", agency: "NOAA SPC", url: p("/api/spc/products/md/validmd.png", "https://www.spc.noaa.gov/products/md/validmd.png") },
+            { title: "Atlantic Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/shtml/A_brief.gif", "https://ocean.weather.gov/shtml/A_brief.gif") },
+            { title: "Pacific Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/shtml/P_brief.gif", "https://ocean.weather.gov/shtml/P_brief.gif") }
+        ];
+
+        buildImageGrid('observatory-grid', observatoryItems, 'obs');
     }
 
     // ----- MAIN DASHBOARD INITIALIZATION -----
@@ -1245,9 +1411,12 @@
             statusEl.style.color = "#fb923c";
 
             scrapeWeatherStories();
-            loadAviationOverviews();
             loadSatellite();
             loadCameras();
+            loadAviationOverviews();
+            loadNasaApod();
+            loadAviationWeather();
+            loadObservatory();
             fetchNasStatus();
             
             if (!isInitialized) {
@@ -1256,6 +1425,8 @@
                 setInterval(() => {
                     loadAviationOverviews();
                     loadSatellite();
+                    loadAviationWeather();
+                    loadObservatory();
                     fetchNasStatus();
                 }, 300000); 
                 isInitialized = true;
