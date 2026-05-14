@@ -1113,11 +1113,13 @@
         
         try {
             // Endpoints replicating nasstatus.faa.gov
+            // If hosted on Netlify, use our local proxy to bypass CORS. Otherwise use direct URLs (requires CORS extension).
+            const isNetlify = window.location.hostname.includes('netlify.app');
             const endpoints = [
-                { title: 'Active Airport Events', url: 'https://nasstatus.faa.gov/api/airport-events' },
-                { title: 'Active En Route Events', url: 'https://nasstatus.faa.gov/api/enroute-events' },
-                { title: 'Forecast Events', url: 'https://nasstatus.faa.gov/api/forecast-events' },
-                { title: 'Air Traffic Control System Command Center (ATCSCC) Announcements', url: 'https://nasstatus.faa.gov/api/atcscc-messages' }
+                { title: 'Active Airport Events', url: isNetlify ? '/api/faa/airport-events' : 'https://nasstatus.faa.gov/api/airport-events' },
+                { title: 'Active En Route Events', url: isNetlify ? '/api/faa/enroute-events' : 'https://nasstatus.faa.gov/api/enroute-events' },
+                { title: 'Forecast Events', url: isNetlify ? '/api/faa/forecast-events' : 'https://nasstatus.faa.gov/api/forecast-events' },
+                { title: 'Air Traffic Control System Command Center (ATCSCC) Announcements', url: isNetlify ? '/api/faa/atcscc-messages' : 'https://nasstatus.faa.gov/api/atcscc-messages' }
             ];
 
             contentEl.innerHTML = '';
@@ -1131,30 +1133,18 @@
                 block.style.borderLeft = '4px solid var(--accent-orange)';
                 
                 let html = `<h3 style="margin-top: 0; margin-bottom: 8px; color: var(--accent-blue); font-size: 1rem;">${ep.title}</h3>`;
-                html += `<ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.4;">`;
 
                 let eventsFound = false;
 
                 try {
-                    let res, dataWrapper;
-                    // Robust 5-retry loop to handle Akamai dropping the proxy packets
-                    for (let attempt = 0; attempt < 5; attempt++) {
-                        try {
-                            res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(ep.url)}`);
-                            if (res.ok) {
-                                dataWrapper = await res.json();
-                                if (dataWrapper && dataWrapper.contents) break;
-                            }
-                        } catch(e) { } // Ignore fetch failures and retry
-                        await new Promise(r => setTimeout(r, 1000));
-                    }
-
-                    if (dataWrapper && dataWrapper.contents) {
-                        try {
-                            const data = JSON.parse(dataWrapper.contents);
-                            const items = data.value || data || [];
-                            
-                            if (items.length > 0) {
+                    // Direct fetch - if on Netlify, this hits our netlify.toml proxy!
+                    const res = await fetch(ep.url);
+                    if (res.ok) {
+                        const rawData = await res.json();
+                        // FAA direct JSON usually puts items at the root or under .value
+                        const items = rawData.value || rawData || [];
+                        
+                        if (items.length > 0) {
                                 eventsFound = true;
                                 html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-top: 10px;">`;
                                 
