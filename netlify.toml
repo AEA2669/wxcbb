@@ -21,3 +21,81 @@
   to = "https://www.spc.noaa.gov/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/swpc/*"
+  to = "https://services.swpc.noaa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nhc/*"
+  to = "https://www.nhc.noaa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sdo/*"
+  to = "https://sdo.gsfc.nasa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/awc/*"
+  to = "https://aviationweather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nesdis/*"
+  to = "https://cdn.star.nesdis.noaa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/cpc/*"
+  to = "https://www.cpc.ncep.noaa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nws/*"
+  to = "https://forecast.weather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/opc/*"
+  to = "https://ocean.weather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nasa-apod/*"
+  to = "https://api.nasa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nasa-epic/*"
+  to = "https://epic.gsfc.nasa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/noaa-tsunami/*"
+  to = "https://www.tsunami.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/nwsimg/*"
+  to = "https://www.weather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/aviationwx/*"
+  to = "https://www.aviationweather.gov/:splat"
+  status = 200
+  force = true
