@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/api/faa/*"
+  to = "https://nasstatus.faa.gov/api/:splat"
+  status = 200
+  force = true
