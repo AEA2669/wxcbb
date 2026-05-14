@@ -461,6 +461,71 @@
     <h2 class="section-title">✈️ Aviation Weather Intelligence</h2>
     <div style="margin-bottom: 30px; background: var(--panel-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 10px;">
         <div id="aviation-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+    </div>
+
+    <h2 class="section-title">📡 Live Aviation Data Feeds (FAA AWC API)</h2>
+    <div style="margin-bottom: 30px; background: var(--panel-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px;" id="awc-data-grid">
+            <!-- METAR Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(0,100,200,0.4), rgba(0,50,100,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">🛫 Live METARs — DFW Metroplex</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #2563eb; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="metar-feed" style="padding: 12px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Acquiring METAR data...</span>
+                </div>
+            </div>
+            <!-- TAF Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(0,100,200,0.4), rgba(0,50,100,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">📋 Terminal Aerodrome Forecasts (TAF)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #2563eb; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="taf-feed" style="padding: 12px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Acquiring TAF data...</span>
+                </div>
+            </div>
+            <!-- SIGMETs Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(200,16,46,0.4), rgba(100,8,23,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">⚠️ Active SIGMETs & AIRSIGMETs</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #c8102e; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="sigmet-feed" style="padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Checking for active SIGMETs...</span>
+                </div>
+            </div>
+            <!-- G-AIRMETs Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(217,119,6,0.4), rgba(108,59,3,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">🔶 Graphical AIRMETs (G-AIRMET)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #d97706; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="gairmet-feed" style="padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Checking for active G-AIRMETs...</span>
+                </div>
+            </div>
+            <!-- CWA Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(200,16,46,0.4), rgba(100,8,23,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">🏢 Center Weather Advisories (CWA)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #c8102e; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="cwa-feed" style="padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto;">
+                    <span style="color: var(--accent-orange);">Checking for active CWAs...</span>
+                </div>
+            </div>
+            <!-- Winds Aloft Panel -->
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 12px; background: linear-gradient(135deg, rgba(0,100,200,0.4), rgba(0,50,100,0.2)); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">💨 Winds & Temps Aloft (FD)</span>
+                    <span style="font-size: 0.7rem; padding: 2px 8px; background: #2563eb; color: #fff; border-radius: 10px; font-weight: 600;">FAA AWC</span>
+                </div>
+                <div id="winds-feed" style="padding: 12px; font-family: 'Courier New', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--text-main); max-height: 400px; overflow-y: auto; white-space: pre-wrap;">
+                    <span style="color: var(--accent-orange);">Acquiring Winds Aloft data...</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1337,16 +1402,28 @@
         const p = (proxy, direct) => isNetlify ? proxy : direct;
 
         const aviationItems = [
-            { title: "IFR/VFR Conditions (Current)", agency: "FAA AWC", url: p("/api/awc/data/products/progs/F007_wpc_prog.gif", "https://aviationweather.gov/data/products/progs/F007_wpc_prog.gif") },
-            { title: "Turbulence Forecast (FL240-FL390)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/turb_sigwx_conus.gif", "https://aviationweather.gov/data/products/swl/turb_sigwx_conus.gif") },
-            { title: "Icing Forecast (Surface-FL240)", agency: "FAA AWC", url: p("/api/awc/data/products/swl/ice_sigwx_conus.gif", "https://aviationweather.gov/data/products/swl/ice_sigwx_conus.gif") },
-            { title: "Low-Level Significant Weather", agency: "FAA AWC", url: p("/api/awc/data/products/swl/llsgwx_conus.gif", "https://aviationweather.gov/data/products/swl/llsgwx_conus.gif") },
-            { title: "Ceiling & Visibility Analysis", agency: "FAA AWC", url: p("/api/awc/data/products/swl/cva_conus.gif", "https://aviationweather.gov/data/products/swl/cva_conus.gif") },
-            { title: "SPC Day 2 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day2otlk.gif", "https://www.spc.noaa.gov/products/outlook/day2otlk.gif") },
-            { title: "SPC Day 3 Convective Outlook", agency: "NOAA SPC", url: p("/api/spc/products/outlook/day3otlk.gif", "https://www.spc.noaa.gov/products/outlook/day3otlk.gif") },
-            { title: "Current SPC Watches", agency: "NOAA SPC", url: p("/api/spc/products/watch/validww.png", "https://www.spc.noaa.gov/products/watch/validww.png") },
-            { title: "SPC Fire Weather Outlook", agency: "NOAA SPC", url: p("/api/spc/products/fire_wx/fwdy1.gif", "https://www.spc.noaa.gov/products/fire_wx/fwdy1.gif") },
-            { title: "WPC Surface Analysis (Current)", agency: "NOAA WPC", url: p("/api/wpc/basicwx/9fndfd.gif", "https://www.wpc.ncep.noaa.gov/basicwx/9fndfd.gif") }
+            // WPC Surface & Prog Charts (verified working)
+            { title: "WPC Surface Analysis (Current)", agency: "NOAA WPC", url: p("/api/wpc/basicwx/92fndfd.gif", "https://www.wpc.ncep.noaa.gov/basicwx/92fndfd.gif") },
+            { title: "WPC Day 1 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad1.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif") },
+            { title: "WPC Day 2 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad2.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif") },
+            { title: "WPC Day 3 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad3.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif") },
+            // GOES CONUS Satellite Views (verified working)
+            { title: "GOES-East CONUS (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/GEOCOLOR/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/625x375.jpg") },
+            { title: "GOES-East CONUS Infrared (Band 10)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/10/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/10/625x375.jpg") },
+            { title: "GOES-East CONUS Water Vapor (Mid)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/09/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/09/625x375.jpg") },
+            { title: "GOES-East CONUS Clean Longwave IR", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/13/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/13/625x375.jpg") },
+            { title: "GOES-East CONUS Shortwave IR", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/14/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/14/625x375.jpg") },
+            // Precipitation & Severe Weather (verified working)
+            { title: "QPF Day 1-5 Precipitation", agency: "NOAA WPC", url: p("/api/wpc/qpf/p120i.gif", "https://www.wpc.ncep.noaa.gov/qpf/p120i.gif") },
+            { title: "QPF Day 1-2 Filled Contour", agency: "NOAA WPC", url: p("/api/wpc/qpf/d12_fill.gif", "https://www.wpc.ncep.noaa.gov/qpf/d12_fill.gif") },
+            { title: "Excessive Rainfall Outlook", agency: "NOAA WPC", url: p("/api/wpc/qpf/94ewbg.gif", "https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif") },
+            { title: "Quantitative Precip Forecast (Day 1)", agency: "NOAA WPC", url: p("/api/wpc/qpf/fill_94qwbg.gif", "https://www.wpc.ncep.noaa.gov/qpf/fill_94qwbg.gif") },
+            // NWS Graphical Forecasts (verified working)
+            { title: "NWS Max Temperature Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/MaxT1_conus.png", "https://graphical.weather.gov/images/conus/MaxT1_conus.png") },
+            { title: "NWS Min Temperature Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/MinT1_conus.png", "https://graphical.weather.gov/images/conus/MinT1_conus.png") },
+            { title: "NWS Wind Speed Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/WindSpd1_conus.png", "https://graphical.weather.gov/images/conus/WindSpd1_conus.png") },
+            { title: "NWS Weather Type Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Wx1_conus.png", "https://graphical.weather.gov/images/conus/Wx1_conus.png") },
+            { title: "NWS Sky Cover Forecast", agency: "NOAA NWS", url: p("/api/graphwx/images/conus/Sky1_conus.png", "https://graphical.weather.gov/images/conus/Sky1_conus.png") }
         ];
 
         buildImageGrid('aviation-grid', aviationItems, 'avi');
@@ -1357,39 +1434,160 @@
         const p = (proxy, direct) => isNetlify ? proxy : direct;
 
         const observatoryItems = [
-            // NASA Solar & Space
+            // ===== NASA SOLAR DYNAMICS OBSERVATORY (9 live instruments) =====
             { title: "Solar Corona (193\u00c5 EUV)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0193.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg") },
             { title: "Solar Chromosphere (304\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0304.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg") },
-            { title: "Solar Magnetic Field (HMI)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMII.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMII.jpg") },
             { title: "Solar Active Regions (171\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0171.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0171.jpg") },
-            { title: "Sun Magnetogram (HMI)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMIBC.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIBC.jpg") },
-            // NOAA Space Weather
-            { title: "Aurora Forecast (Northern Hemisphere)", agency: "NOAA SWPC", url: p("/api/swpc/images/aurora-forecast-northern-hemisphere.jpg", "https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg") },
-            { title: "Planetary K-Index (Geomagnetic)", agency: "NOAA SWPC", url: p("/api/swpc/images/planetary-k-index.gif", "https://services.swpc.noaa.gov/images/planetary-k-index.gif") },
-            { title: "Solar Wind Speed & Density", agency: "NOAA SWPC", url: p("/api/swpc/images/ace-mag-swepam-24-hour.gif", "https://services.swpc.noaa.gov/images/ace-mag-swepam-24-hour.gif") },
-            { title: "X-Ray Flux (Solar Flares)", agency: "NOAA SWPC", url: p("/api/swpc/images/goes-xray-flux.gif", "https://services.swpc.noaa.gov/images/goes-xray-flux.gif") },
-            // NOAA Earth & Weather
+            { title: "Solar Flare Hotspots (131\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0131.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0131.jpg") },
+            { title: "Solar Iron Line (94\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0094.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0094.jpg") },
+            { title: "Solar Transition Region (335\u00c5)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_0335.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0335.jpg") },
+            { title: "Solar Tri-Color Composite", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_211193171.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_211193171.jpg") },
+            { title: "Solar Magnetic Field (HMI Intensitygram)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMII.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMII.jpg") },
+            { title: "Solar Magnetogram (HMI Color)", agency: "NASA SDO", url: p("/api/sdo/assets/img/latest/latest_512_HMIBC.jpg", "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIBC.jpg") },
+            // ===== NOAA SPACE WEATHER (5 verified feeds) =====
+            { title: "Aurora Forecast (Northern Hemisphere)", agency: "NOAA SWPC", url: p("/api/swpc/images/animations/ovation/north/latest.jpg", "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg") },
+            { title: "Space Weather Overview Dashboard", agency: "NOAA SWPC", url: p("/api/swpc/images/swx-overview-large.gif", "https://services.swpc.noaa.gov/images/swx-overview-large.gif") },
+            { title: "SOHO LASCO C3 Coronagraph (Live)", agency: "NASA SOHO", url: p("/api/swpc/images/animations/lasco-c3/latest.jpg", "https://services.swpc.noaa.gov/images/animations/lasco-c3/latest.jpg") },
+            { title: "SUVI Solar EUV 195\u00c5 (Live)", agency: "NOAA GOES", url: p("/api/swpc/images/animations/suvi/primary/195/latest.png", "https://services.swpc.noaa.gov/images/animations/suvi/primary/195/latest.png") },
+            { title: "SUVI Solar EUV 304\u00c5 (Live)", agency: "NOAA GOES", url: p("/api/swpc/images/animations/suvi/primary/304/latest.png", "https://services.swpc.noaa.gov/images/animations/suvi/primary/304/latest.png") },
+            { title: "WSA-Enlil Solar Wind Model", agency: "NOAA SWPC", url: p("/api/swpc/images/animations/enlil/latest.jpg", "https://services.swpc.noaa.gov/images/animations/enlil/latest.jpg") },
+            // ===== GOES FULL DISK SATELLITE =====
             { title: "GOES-East Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/678x678.jpg") },
             { title: "GOES-West Full Disk (GeoColor)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES18/ABI/FD/GEOCOLOR/678x678.jpg", "https://cdn.star.nesdis.noaa.gov/GOES18/ABI/FD/GEOCOLOR/678x678.jpg") },
-            { title: "GOES-East Infrared (Band 10)", agency: "NOAA NESDIS", url: p("/api/nesdis/GOES16/ABI/CONUS/10/625x375.jpg", "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/10/625x375.jpg") },
+            // ===== TROPICAL CYCLONES =====
             { title: "Atlantic Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_atl_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_atl_5d0.png") },
-            { title: "Pacific Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_pac_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_pac_5d0.png") },
-            { title: "National Hazard Map (Active Alerts)", agency: "NOAA NWS", url: p("/api/nws/wwamap/png/US.png", "https://forecast.weather.gov/wwamap/png/US.png") },
-            // NOAA Climate & Precipitation
-            { title: "National QPF (Day 1-5 Precip)", agency: "NOAA WPC", url: p("/api/wpc/qpf/p120i.gif", "https://www.wpc.ncep.noaa.gov/qpf/p120i.gif") },
-            { title: "Excessive Rainfall Outlook", agency: "NOAA WPC", url: p("/api/wpc/qpf/94ewbg.gif", "https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif") },
-            { title: "WPC Day 2 Surface Forecast", agency: "NOAA WPC", url: p("/api/wpc/noaa/noaad2.gif", "https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif") },
+            { title: "East Pacific Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_pac_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_pac_5d0.png") },
+            { title: "Central Pacific Tropical Cyclone Outlook", agency: "NOAA NHC", url: p("/api/nhc/xgtwo/two_cpac_5d0.png", "https://www.nhc.noaa.gov/xgtwo/two_cpac_5d0.png") },
+            // ===== OCEAN WEATHER =====
+            { title: "Atlantic Ocean Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/A_sfc_full_ocean_color.png", "https://ocean.weather.gov/A_sfc_full_ocean_color.png") },
+            { title: "Pacific Ocean Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/P_sfc_full_ocean_color.png", "https://ocean.weather.gov/P_sfc_full_ocean_color.png") },
+            // ===== CLIMATE OUTLOOKS (6 products) =====
             { title: "6-10 Day Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610temp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif") },
             { title: "6-10 Day Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/610day/610prcp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif") },
             { title: "8-14 Day Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/814day/814temp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif") },
             { title: "8-14 Day Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/814day/814prcp.new.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif") },
-            // SPC & OPC
-            { title: "Active Mesoscale Discussions", agency: "NOAA SPC", url: p("/api/spc/products/md/validmd.png", "https://www.spc.noaa.gov/products/md/validmd.png") },
-            { title: "Atlantic Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/shtml/A_brief.gif", "https://ocean.weather.gov/shtml/A_brief.gif") },
-            { title: "Pacific Surface Analysis", agency: "NOAA OPC", url: p("/api/opc/shtml/P_brief.gif", "https://ocean.weather.gov/shtml/P_brief.gif") }
+            { title: "Week 3-4 Temperature Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/WK34/gifs/WK34temp.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif") },
+            { title: "Week 3-4 Precipitation Outlook", agency: "NOAA CPC", url: p("/api/cpc/products/predictions/WK34/gifs/WK34prcp.gif", "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif") }
         ];
 
         buildImageGrid('observatory-grid', observatoryItems, 'obs');
+    }
+
+    async function loadAwcDataFeeds() {
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        const p = (proxy, direct) => isNetlify ? proxy : direct;
+        const stations = 'KDFW,KDAL,KADS,KFTW,KAFW,KGKY,KRBD,KGPM,KTKI';
+
+        // ---- METAR Feed ----
+        try {
+            const metarRes = await fetch(p(`/api/awc/api/data/metar?ids=${stations}&format=json`, `https://aviationweather.gov/api/data/metar?ids=${stations}&format=json`));
+            if (metarRes.ok) {
+                const metars = await metarRes.json();
+                const el = document.getElementById('metar-feed');
+                if (el && metars.length > 0) {
+                    el.innerHTML = metars.map(m => {
+                        const catColors = { VFR: '#4ade80', MVFR: '#60a5fa', IFR: '#f87171', LIFR: '#c084fc' };
+                        const catColor = catColors[m.fltCat] || '#94a3b8';
+                        return `<div style="padding: 6px 8px; margin-bottom: 6px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid ${catColor};">
+                            <span style="font-weight:bold; color: ${catColor};">${m.icaoId}</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: 6px;">${m.name || ''}</span>
+                            <span style="float:right; font-size: 0.7rem; padding: 1px 6px; background: ${catColor}; color: #000; border-radius: 8px; font-weight:700;">${m.fltCat}</span>
+                            <div style="margin-top: 4px; opacity: 0.9;">${m.rawOb}</div>
+                        </div>`;
+                    }).join('');
+                } else if (el) { el.innerHTML = '<span style="color:#94a3b8;">No METAR data available.</span>'; }
+            }
+        } catch(e) { console.log('METAR feed error:', e); }
+
+        // ---- TAF Feed ----
+        try {
+            const tafRes = await fetch(p(`/api/awc/api/data/taf?ids=KDFW,KDAL,KFTW,KAFW&format=raw`, `https://aviationweather.gov/api/data/taf?ids=KDFW,KDAL,KFTW,KAFW&format=raw`));
+            if (tafRes.ok) {
+                const tafText = await tafRes.text();
+                const el = document.getElementById('taf-feed');
+                if (el && tafText.trim()) {
+                    const tafs = tafText.trim().split(/\n(?=TAF )/);
+                    el.innerHTML = tafs.map(t => `<div style="padding: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid #60a5fa; white-space: pre-wrap;">${t.trim()}</div>`).join('');
+                } else if (el) { el.innerHTML = '<span style="color:#94a3b8;">No TAF data available.</span>'; }
+            }
+        } catch(e) { console.log('TAF feed error:', e); }
+
+        // ---- SIGMET Feed ----
+        try {
+            const sigRes = await fetch(p('/api/awc/api/data/airsigmet?format=json', 'https://aviationweather.gov/api/data/airsigmet?format=json'));
+            if (sigRes.ok) {
+                const sigs = await sigRes.json();
+                const el = document.getElementById('sigmet-feed');
+                if (el) {
+                    if (sigs.length > 0) {
+                        el.innerHTML = sigs.slice(0, 20).map(s => {
+                            const hazColors = { CONVECTIVE: '#ef4444', TURB: '#f59e0b', ICE: '#3b82f6', IFR: '#a855f7', ASH: '#6b7280', MTN_OBSCN: '#78716c' };
+                            const color = hazColors[s.hazard] || '#94a3b8';
+                            return `<div style="padding: 8px; margin-bottom: 6px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid ${color};">
+                                <span style="font-weight:700; color: ${color};">${s.hazard || 'SIGMET'}</span>
+                                <span style="font-size: 0.8rem; margin-left: 8px; color: var(--text-muted);">${s.airSigmetType || ''} • ${s.icaoId || ''}</span>
+                                <div style="margin-top: 4px; font-size: 0.82rem; opacity: 0.9;">${s.rawAirSigmet || s.rawOb || 'No raw text'}</div>
+                            </div>`;
+                        }).join('');
+                    } else { el.innerHTML = '<div style="color: #4ade80; font-weight: 600;">✅ No active SIGMETs or AIRSIGMETs — Clear skies nationwide.</div>'; }
+                }
+            }
+        } catch(e) { console.log('SIGMET feed error:', e); }
+
+        // ---- G-AIRMET Feed ----
+        try {
+            const gRes = await fetch(p('/api/awc/api/data/gairmet?format=json', 'https://aviationweather.gov/api/data/gairmet?format=json'));
+            if (gRes.ok) {
+                const gairs = await gRes.json();
+                const el = document.getElementById('gairmet-feed');
+                if (el) {
+                    if (gairs.length > 0) {
+                        el.innerHTML = gairs.slice(0, 15).map(g => {
+                            const hazColors = { TURB: '#f59e0b', ICE: '#3b82f6', IFR: '#a855f7', MT_OBSC: '#78716c', SFC_WND: '#ef4444', LLWS: '#f97316' };
+                            const color = hazColors[g.hazard] || '#d97706';
+                            return `<div style="padding: 8px; margin-bottom: 6px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid ${color};">
+                                <span style="font-weight:700; color: ${color};">${g.hazard || 'G-AIRMET'}</span>
+                                <span style="font-size: 0.8rem; margin-left: 8px; color: var(--text-muted);">Severity: ${g.severity || 'N/A'} • ${g.dueTo || ''}</span>
+                                <div style="margin-top: 4px; font-size: 0.82rem; opacity: 0.9;">Base: ${g.base || '?'} ft — Top: ${g.top || '?'} ft</div>
+                            </div>`;
+                        }).join('');
+                    } else { el.innerHTML = '<div style="color: #4ade80; font-weight: 600;">✅ No active G-AIRMETs.</div>'; }
+                }
+            }
+        } catch(e) { console.log('G-AIRMET feed error:', e); }
+
+        // ---- CWA Feed ----
+        try {
+            const cwaRes = await fetch(p('/api/awc/api/data/cwa?format=json', 'https://aviationweather.gov/api/data/cwa?format=json'));
+            if (cwaRes.ok) {
+                const cwas = await cwaRes.json();
+                const el = document.getElementById('cwa-feed');
+                if (el) {
+                    if (cwas.length > 0) {
+                        el.innerHTML = cwas.slice(0, 15).map(c => {
+                            return `<div style="padding: 8px; margin-bottom: 6px; background: rgba(0,0,0,0.15); border-radius: 4px; border-left: 3px solid #ef4444;">
+                                <span style="font-weight:700; color: #ef4444;">${c.cwsu || 'CWA'}</span>
+                                <span style="font-size: 0.8rem; margin-left: 8px; color: var(--text-muted);">${c.hazard || ''} • CWA #${c.cwaText?.substring(0,10) || ''}</span>
+                                <div style="margin-top: 4px; font-size: 0.82rem; opacity: 0.9;">${c.cwaText || c.rawCwa || 'No text available'}</div>
+                            </div>`;
+                        }).join('');
+                    } else { el.innerHTML = '<div style="color: #4ade80; font-weight: 600;">✅ No active Center Weather Advisories.</div>'; }
+                }
+            }
+        } catch(e) { console.log('CWA feed error:', e); }
+
+        // ---- Winds Aloft Feed ----
+        try {
+            const windRes = await fetch(p('/api/awc/api/data/windtemp?region=us&level=low&fcst=06', 'https://aviationweather.gov/api/data/windtemp?region=us&level=low&fcst=06'));
+            if (windRes.ok) {
+                const windText = await windRes.text();
+                const el = document.getElementById('winds-feed');
+                if (el && windText.trim()) {
+                    el.textContent = windText.trim();
+                    el.style.color = 'var(--text-main)';
+                } else if (el) { el.innerHTML = '<span style="color:#94a3b8;">No Winds Aloft data available.</span>'; }
+            }
+        } catch(e) { console.log('Winds feed error:', e); }
     }
 
     // ----- MAIN DASHBOARD INITIALIZATION -----
@@ -1416,6 +1614,7 @@
             loadAviationOverviews();
             loadNasaApod();
             loadAviationWeather();
+            loadAwcDataFeeds();
             loadObservatory();
             fetchNasStatus();
             
@@ -1426,6 +1625,7 @@
                     loadAviationOverviews();
                     loadSatellite();
                     loadAviationWeather();
+                    loadAwcDataFeeds();
                     loadObservatory();
                     fetchNasStatus();
                 }, 300000); 
