@@ -59,6 +59,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/nws-api/*"
+  to = "https://api.weather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/nws/*"
   to = "https://forecast.weather.gov/:splat"
   status = 200
@@ -71,14 +77,8 @@
   force = true
 
 [[redirects]]
-  from = "/api/nasa-apod/*"
+  from = "/api/nasa/*"
   to = "https://api.nasa.gov/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/nasa-epic/*"
-  to = "https://epic.gsfc.nasa.gov/:splat"
   status = 200
   force = true
 
@@ -103,5 +103,35 @@
 [[redirects]]
   from = "/api/graphwx/*"
   to = "https://graphical.weather.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/iem/*"
+  to = "https://mesonet.agron.iastate.edu/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/rainviewer/*"
+  to = "https://api.rainviewer.com/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sunrise-sunset/*"
+  to = "https://api.sunrise-sunset.org/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/faa-cams/*"
+  to = "https://weathercams.faa.gov/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/rucsoundings/*"
+  to = "https://rucsoundings.noaa.gov/:splat"
   status = 200
   force = true
