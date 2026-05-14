@@ -1199,10 +1199,9 @@
                                 
                                 html += `</div>`;
                             }
-                        } catch (parseError) {
-                            // If the FAA returns a 404 HTML page instead of JSON, fail gracefully
-                            console.log(`Failed to parse ${ep.title} - likely a 404 HTML response.`);
                         }
+                    } else {
+                        console.log(`FAA API returned non-OK status for ${ep.title}: ${res.status}`);
                     }
                 } catch (e) {
                     console.log(`Failed to fetch ${ep.title}`, e);
